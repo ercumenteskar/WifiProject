@@ -12,12 +12,22 @@ namespace WifiService
   public interface IService1
   {
     [OperationContract]
-    string GetData(int value);
-
+    String GetSecurityCode(String TelNoHash);
     [OperationContract]
-    CompositeType GetDataUsingDataContract(CompositeType composite);
+    String Login(String Evidence);
+    [OperationContract]
+    String ConnectUS(String ClientEvidence, String ProviderEvidence);
+    [OperationContract]
+    String SetUsage(String ClientUsageMsg, String ProviderUsageMsg, Int64 ConnectionID);
+    [OperationContract]
+    String Register(String @TelNo, String @Pass, Int64 @Quota);
+    //[OperationContract]
+    //[OperationContract]
+    //[OperationContract]
+    //[OperationContract]
+    //[OperationContract]
 
-    // TODO: Add your service operations here
+
   }
 
   // Use a data contract as illustrated in the sample below to add composite types to service operations.

@@ -12,3 +12,6 @@ C:\VSProjects\ConsoleApplication1\ConsoleApplication1\bin\Debug\SharpPcap.xml
 C:\VSProjects\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.exe
 C:\VSProjects\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.pdb
 C:\VSProjects\ConsoleApplication1\ConsoleApplication1\obj\Debug\ConsoleApplication1.csprojResolveAssemblyReference.cache
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Debug\ConsoleApplication1.exe.config
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\obj\Debug\ConsoleApplication1.exe
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\obj\Debug\ConsoleApplication1.pdb
