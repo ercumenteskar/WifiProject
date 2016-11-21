@@ -14,12 +14,19 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using My;
+using System.Timers;
 
 namespace ConsoleApplication1
 {
   class Program
   {
     private static clsDHCP dhcpServer;
+    private static string TelNo = "5448302898";
+    private static String TelNoHash = "";
+    private static String Password = "e";
+    private static String SecurityCode = "";
+    public static WifiService.Service1Client WCF = new WifiService.Service1Client();
     //private delegate void Adff();
     //delegate void SimpleDelegate();
     public static string startIp = "192.168.137.1", MacMask = "", AdapterIP = "0.0.0.0"; //"0.0.0.0"
@@ -54,6 +61,15 @@ namespace ConsoleApplication1
     {
       public String Mac = "00:00:00:00:00:00";
       public String Ip = "0.0.0.0";
+      public String TelNoHash = "";
+      public Int64  ConnectionID = 0;
+      public Int64 Quota = 0;
+      public Int64 Usage = 0;
+      public DateTime LastWhatsUp;
+      // geçici
+      public String Password = "e";
+      public String SecurityCode = "";
+      //
       public Client(String MacAddr, String IpAddr)
       {
         if ((MacAddr.Length == 12) && (MacAddr.IndexOf(":") < 0))
@@ -103,6 +119,11 @@ namespace ConsoleApplication1
         return p1.StandardOutput.ReadToEnd();
       }
     }
+    private static String myEvidence(String Mesaj = "")
+    {
+      return TelNoHash + (SecurityCode + (TelNoHash + Password).HashMD5() + Mesaj.HashMD5()).HashMD5() + Mesaj;
+    }
+
     public static void Main(string[] args)
     {
       /*
@@ -110,6 +131,27 @@ namespace ConsoleApplication1
       Console.WriteLine(Netsh("wlan stop hostednetwork"));
       */
 //      AppDomain.CurrentDomain.ProcessExit += new EventHandler(CurrentDomain_ProcessExit);
+      TelNoHash = TelNo.HashMD5();
+      SecurityCode = WCF.GetSecurityCode(TelNoHash);
+      if (SecurityCode!="") 
+        Console.WriteLine("SecurityCode alındı:"+SecurityCode);
+      else
+      {
+        Console.WriteLine("SecurityCode alınamadı:" + SecurityCode);
+        return;
+      }
+      SecurityCode = WCF.Login(myEvidence()).Substring(0, 32);
+      if (SecurityCode != "")
+        Console.WriteLine("Login olundu:" + SecurityCode);
+      else
+      {
+        Console.WriteLine("Login hatalı:" + SecurityCode);
+        return;
+      }
+      System.Timers.Timer myTimer = new System.Timers.Timer();
+      myTimer.Elapsed += new ElapsedEventHandler(myTimerOnTick);
+      myTimer.Interval = 2000;
+      myTimer.Enabled = true;
       DisableICS();
       //Netsh("wlan set hostednetwork mode=disallow"); //  key=ercierci
       Netsh("wlan stop hostednetwork");
@@ -143,18 +185,17 @@ namespace ConsoleApplication1
       //Console.WriteLine("HotSpot Opened");
       //Thread.Sleep(200);
       nics.Clear();
-      var iii = IcsManager.GetAllIPv4Interfaces();
       foreach (NetworkInterface nic in IcsManager.GetAllIPv4Interfaces())
         if (nic.NetworkInterfaceType != NetworkInterfaceType.Tunnel && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback && nic.Id != source) // nic.OperationalStatus == OperationalStatus.Up && 
           nics.Add(nic);
-      if (nics.Count > 1)
-      {
-        for (int i = 0; i < nics.Count; i++)
-          Console.WriteLine(i.ToString() + "-) {0} {1}", nics[i].Name, nics[i].Id);
-        Console.WriteLine("Select your hotspot");
-        hotspot = nics[Int32.Parse(Console.ReadLine())].Id;
-      }
-      else
+      //if (nics.Count > 1) // TODO Aslında 0 ı değil kullanıcının istediğini seçmem lazım
+      //{
+      //  for (int i = 0; i < nics.Count; i++)
+      //    Console.WriteLine(i.ToString() + "-) {0} {1}", nics[i].Name, nics[i].Id);
+      //  Console.WriteLine("Select your hotspot");
+      //  hotspot = nics[Int32.Parse(Console.ReadLine())].Id;
+      //}
+      //else
         hotspot = nics[0].Id;
 
       EnableICS(source, hotspot, true);
@@ -233,10 +274,93 @@ namespace ConsoleApplication1
       //Netsh("wlan set hostednetwork mode=disallow"); //  key=ercierci
       Netsh("wlan stop hostednetwork");
     }
-
+    private static void myTimerOnTick(object source, ElapsedEventArgs e)
+    {
+      //Console.WriteLine("Hello World!");
+    }
     public static string SendResponse(HttpListenerRequest request)
     {
-      if (!request.Url.ToString().Contains("action")) return "<HTML><BODY>HOŞ GELDİNİZ KAYIT OLMAK İÇİN : <br><a href=\"http://"+providerIp+"/action\">TIKLAYINIZ</a></BODY></HTML>";
+      if (clients.Find(x => x.Ip == request.RemoteEndPoint.Address.ToString()) == null)
+        clients.Add(new Client("", request.RemoteEndPoint.Address.ToString()));
+      Client _client = clients.Find(x => x.Ip == request.RemoteEndPoint.Address.ToString());
+      String qry = "";
+      if (request.Url.ToString().Contains(providerIp + "/GetSecurityCode?TelNoHash="))
+      {
+        qry = request.Url.ToString();
+        String TelNoHash = qry.Substring(qry.IndexOf("=") + 1);
+        qry = WCF.GetSecurityCode(TelNoHash);
+        if (qry.Length == 32)
+        {
+          _client.TelNoHash = TelNoHash;
+          return "<a href='Login?Evidence="+_client.TelNoHash+(qry+(TelNoHash+_client.Password).HashMD5()+("").HashMD5()).HashMD5()+"'>Login</a>";//qry;
+        }
+        else return "error:" + qry;
+      }
+      else if (request.Url.ToString().Contains(providerIp + "/Login?Evidence="))
+      {
+        qry = request.Url.ToString();
+        String Evidence = qry.Substring(qry.IndexOf("=") + 1);
+        qry = WCF.Login(Evidence);
+        if (qry.Length >= 34)
+        {
+          _client.Quota = Int64.Parse(qry.Substring(33));
+          _client.SecurityCode = qry.Substring(0, 32);
+          return "<a href='ConnectUS?ClientEvidence=" + _client.TelNoHash + (_client.SecurityCode + (_client.TelNoHash + _client.Password).HashMD5() + ("").HashMD5()).HashMD5() + "'>ConnectUS</a>";//qry;
+        }
+        else return "error:" + qry;
+      }
+      else if (request.Url.ToString().Contains(providerIp + "/ConnectUS?ClientEvidence="))
+      {
+        qry = request.Url.ToString();
+        String ClientEvidence = qry.Substring(qry.IndexOf("=") + 1);
+        qry = myEvidence();
+        qry = WCF.ConnectUS(ClientEvidence, qry);
+        if (qry.Length >= 67)
+        {
+          _client.ConnectionID = Int64.Parse(qry.Substring(66));
+          _client.SecurityCode = qry.Substring(0, 32);
+          SecurityCode = qry.Substring(33, 32);
+          return "<a href='WhatsUp?TelNoHash=" + _client.TelNoHash + "'>WhatsUp</a>";
+//          return qry.Substring(0, 32) + ";" + qry.Substring(66); // Client SecurityCode+";"+ConnectionID
+        }
+        else return "error:" + qry;
+      }
+      else if (request.Url.ToString().Contains(providerIp + "/WhatsUp?TelNoHash="))
+      {
+        qry = request.Url.ToString();
+        String TelNoHash = qry.Substring(qry.IndexOf("=") + 1);
+        if (_client.TelNoHash == TelNoHash)
+        {
+          _client.LastWhatsUp = DateTime.Now;
+          Int64 usg = _client.Usage;
+          return "<a href='SetUsage?Message=" + _client.TelNoHash + (_client.SecurityCode + (TelNoHash + _client.Password).HashMD5() + (usg.ToString()).HashMD5()).HashMD5() + usg.ToString() + "'>SetUsage</a>";
+//          return _client.Usage.ToString() + ";" + _client.ConnectionID.ToString();
+        }
+        else return "error:" + _client.TelNoHash + "<>" + TelNoHash;
+      }
+      else if (request.Url.ToString().Contains(providerIp + "/SetUsage?Message="))
+      {
+        qry = request.Url.ToString().Substring(request.Url.ToString().IndexOf("=")+1);
+        String TelNoHash = qry.Substring(0, 32);
+        if (_client.TelNoHash == TelNoHash)
+        {
+          String amount = qry.Substring(64);
+          amount = WCF.SetUsage(qry, myEvidence(amount), _client.ConnectionID);
+          _client.LastWhatsUp = DateTime.Now;
+          _client.SecurityCode = amount.Substring(0, 32);
+          SecurityCode = amount.Substring(33, 32);
+          Int64 usg = _client.Usage;
+          // Burada buna bakılmaz. Güncellenmiş olabilir çünkü. Clientdan gelen değeri ona ne zaman gönderdiğimize bakıcaz, x saniyeyi geçmedi ise o miktar ile evidence hazırlayacağız. Güncel _client.Usage ile değil.
+          return "<a href='SetUsage?Message=" + _client.TelNoHash + (_client.SecurityCode + (TelNoHash + _client.Password).HashMD5() + (usg.ToString()).HashMD5()).HashMD5() + usg.ToString() + "'>SetUsage</a>";
+//          return amount.Substring(0, 32);
+        }
+        else return "error:" + _client.TelNoHash + "<>" + TelNoHash;
+      }
+      else return "<a href='GetSecurityCode?TelNoHash=5CAA8CD9E281E9A815AD88C79DB734FF'>GetSecurityCode</a>";
+
+
+/*
+      if (!request.Url.ToString().Contains("action")) return "<HTML><BODY>HOŞ GELDİNİZ KAYIT OLMAK İÇİN : <br><a href=\"http://" + providerIp + "/action\">TIKLAYINIZ</a></BODY></HTML>";
       if (clients.Find(x => x.Ip == request.RemoteEndPoint.Address.ToString()) == null)
       {
         clients.Add(new Client("", request.RemoteEndPoint.Address.ToString()));
@@ -247,7 +371,8 @@ namespace ConsoleApplication1
       {
         clients.Remove(clients.Find(x => x.Ip == request.RemoteEndPoint.Address.ToString()));
         Console.WriteLine(request.RemoteEndPoint.Address.ToString() + "İP KALDIRILDI ------------------------------");
-        /*
+*/
+      /*
         Type netFwPolicy2Type = Type.GetTypeFromProgID("HNetCfg.FwPolicy2");
         INetFwPolicy2 mgr = (INetFwPolicy2)Activator.CreateInstance(netFwPolicy2Type);
 
@@ -267,9 +392,9 @@ namespace ConsoleApplication1
         //dnsServer = new DnsServer(IPAddress.Any, 10, 10);
         //dnsServer.QueryReceived += OnQueryReceived;
         //dnsServer.Start();
-        return string.Format("<HTML><BODY>{0}<br>SİLİNDİ</BODY></HTML>", request.RemoteEndPoint.Address.ToString());
+//        return string.Format("<HTML><BODY>{0}<br>SİLİNDİ</BODY></HTML>", request.RemoteEndPoint.Address.ToString());
 //        return "SİLİNDİ";
-      }
+//      }
       //else return string.Format("<HTML><BODY>{0}<br>ZATEN VAR</BODY></HTML>", request.RemoteEndPoint.Address.ToString());
     }
 
@@ -280,10 +405,10 @@ namespace ConsoleApplication1
 
     private static bool yetkili(Client cl)
     {
-      return true;
+      //return true;
       //return false;
-      if (cl != null)
-        return cl.Mac.StartsWith("40:");
+      if ((cl != null) && (cl.ConnectionID>=0)) 
+        return true;//cl.Mac.StartsWith("40:");
       else
         return false;
     }
@@ -332,6 +457,7 @@ namespace ConsoleApplication1
       {
         //Console.WriteLine(sb);
         TotalRcv += PackSize;
+        clients.Find(x => x.Mac == des).Usage = TotalRcv;
         Console.WriteLine(src + ">" + des + " : " + TotalRcv.ToString("###,###,###") + "Byte " + (TotalRcv / 1024).ToString("###,###,###") + "KB " + (TotalRcv / 1024 / 1024).ToString("###,###,###") + "MB " + (TotalRcv / 1024 / 1024 / 1024).ToString("###,###,###") + "GB ");// + " (" + TotalRcv.ToString("###,###,###") + ")");
       }
       //}
