@@ -10,7 +10,7 @@ namespace ConsoleApplication1
 {
   public class MyWebServer
   {
-    private readonly HttpListener _listener = new HttpListener();
+    public HttpListener _listener = new HttpListener();
     private readonly Func<HttpListenerRequest, string> _responderMethod;
 
     public MyWebServer(string[] prefixes, Func<HttpListenerRequest, string> method)
@@ -52,9 +52,18 @@ namespace ConsoleApplication1
               try
               {
                 string rstr = _responderMethod(ctx.Request);
-                byte[] buf = Encoding.UTF8.GetBytes(rstr);
-                ctx.Response.ContentLength64 = buf.Length;
-                ctx.Response.OutputStream.Write(buf, 0, buf.Length);
+                if (rstr == "ŞİMDİLİK KAPALI")
+                {
+                  rstr = ctx.Request.Url.ToString();
+                  ctx.Response.Redirect(rstr);
+                }
+                else
+                {
+                  byte[] buf = Encoding.UTF8.GetBytes(rstr);
+                  ctx.Response.ContentLength64 = buf.Length;
+                  ctx.Response.OutputStream.Write(buf, 0, buf.Length);
+                }
+                
               }
               catch { } // suppress any exceptions
               finally

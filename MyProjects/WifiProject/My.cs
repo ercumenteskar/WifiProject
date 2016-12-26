@@ -170,6 +170,13 @@ namespace My
   #region StringExtension
   public static class StringExtension
   {
+    public static string ReverseString(this string s)
+    {
+      char[] arr = s.ToCharArray();
+      Array.Reverse(arr);
+      return new string(arr);
+    }
+
     public static String mySubString(this String Gelen, int baslangic, int toplam)
     {
       if (Gelen.Length + 1 < (baslangic + toplam))

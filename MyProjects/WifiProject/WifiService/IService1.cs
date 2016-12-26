@@ -18,10 +18,12 @@ namespace WifiService
     [OperationContract]
     String ConnectUS(String ClientEvidence, String ProviderEvidence);
     [OperationContract]
-    String SetUsage(String ClientUsageMsg, String ProviderUsageMsg, Int64 ConnectionID);
+    String SetUsage(String ClientUsageMsg, String ProviderUsageMsg, long ConnectionID);
     [OperationContract]
-    String Register(String @TelNo, String @Pass, Int64 @Quota);
-    //[OperationContract]
+    String Register(String @TelNo, String @Pass, long @Quota);
+    [OperationContract]
+    // Remove, TAMAMEN TESTLERİN HIZLI UYGULANABİLMESİ İÇİN OLUŞTURULDU, SİLİNECEK
+    void Remove(String @TelNo);
     //[OperationContract]
     //[OperationContract]
     //[OperationContract]

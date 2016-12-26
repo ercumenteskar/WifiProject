@@ -44,6 +44,12 @@ namespace ConsoleApplication1.WifiService {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService1/Register", ReplyAction="http://tempuri.org/IService1/RegisterResponse")]
         System.Threading.Tasks.Task<string> RegisterAsync(string TelNo, string Pass, long Quota);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService1/Remove", ReplyAction="http://tempuri.org/IService1/RemoveResponse")]
+        void Remove(string TelNo);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService1/Remove", ReplyAction="http://tempuri.org/IService1/RemoveResponse")]
+        System.Threading.Tasks.Task RemoveAsync(string TelNo);
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -111,6 +117,14 @@ namespace ConsoleApplication1.WifiService {
         
         public System.Threading.Tasks.Task<string> RegisterAsync(string TelNo, string Pass, long Quota) {
             return base.Channel.RegisterAsync(TelNo, Pass, Quota);
+        }
+        
+        public void Remove(string TelNo) {
+            base.Channel.Remove(TelNo);
+        }
+        
+        public System.Threading.Tasks.Task RemoveAsync(string TelNo) {
+            return base.Channel.RemoveAsync(TelNo);
         }
     }
 }
