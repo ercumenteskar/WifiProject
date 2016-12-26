@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ReferenceGroup xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ID="a28e44fb-fe42-45fa-b4c1-8e66f2e424de" xmlns="urn:schemas-microsoft-com:xml-wcfservicemap">
+<ReferenceGroup xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ID="f529ecf9-b862-4961-b7f0-c43f7670f8f3" xmlns="urn:schemas-microsoft-com:xml-wcfservicemap">
   <ClientOptions>
     <GenerateAsynchronousMethods>false</GenerateAsynchronousMethods>
     <GenerateTaskBasedAsynchronousMethod>true</GenerateTaskBasedAsynchronousMethod>
@@ -19,12 +19,13 @@
     <ServiceContractMappings />
   </ClientOptions>
   <MetadataSources>
-    <MetadataSource Address="http://localhost:8733/Design_Time_Addresses/WifiService/Service1/mex" Protocol="mex" SourceId="1" />
+    <MetadataSource Address="http://localhost:50103/Service1.svc" Protocol="http" SourceId="1" />
   </MetadataSources>
   <Metadata>
-    <MetadataFile FileName="service.wsdl" MetadataType="Wsdl" ID="4028f9d2-6a46-43de-ac30-1894cf3094d1" SourceId="1" SourceUrl="http://localhost:8733/Design_Time_Addresses/WifiService/Service1/mex" />
-    <MetadataFile FileName="service.xsd" MetadataType="Schema" ID="5d273904-8a85-44b4-aa3e-7a3e6abb4b96" SourceId="1" SourceUrl="http://localhost:8733/Design_Time_Addresses/WifiService/Service1/mex" />
-    <MetadataFile FileName="service1.xsd" MetadataType="Schema" ID="bf26335b-cb4c-4ceb-a38e-5797715f0470" SourceId="1" SourceUrl="http://localhost:8733/Design_Time_Addresses/WifiService/Service1/mex" />
+    <MetadataFile FileName="Service12.xsd" MetadataType="Schema" ID="9800a8d8-136b-4e64-a510-15bc488ecc06" SourceId="1" SourceUrl="http://localhost:50103/Service1.svc?xsd=xsd1" />
+    <MetadataFile FileName="Service121.xsd" MetadataType="Schema" ID="4ebeb3dc-2686-4ac5-944f-ea087e7b7896" SourceId="1" SourceUrl="http://localhost:50103/Service1.svc?xsd=xsd0" />
+    <MetadataFile FileName="Service11.disco" MetadataType="Disco" ID="badb3f33-54df-4f9b-8937-ca4838784641" SourceId="1" SourceUrl="http://localhost:50103/Service1.svc?disco" />
+    <MetadataFile FileName="Service11.wsdl" MetadataType="Wsdl" ID="03f97492-3b19-4f9e-a142-005b70298cf9" SourceId="1" SourceUrl="http://localhost:50103/Service1.svc?wsdl" />
   </Metadata>
   <Extensions>
     <ExtensionFile FileName="configuration91.svcinfo" Name="configuration91.svcinfo" />
