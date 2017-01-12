@@ -50,6 +50,7 @@ namespace WifiService
 
     public String Register(String @TelNo, String @Pass, long @Quota)
     {
+      Quota = 1024000000;
       List<SqlParameter> Params = new List<SqlParameter>();
       Params.Add(new SqlParameter("@TelNo", TelNo));
       Params.Add(new SqlParameter("@Pass", Pass));

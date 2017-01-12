@@ -1,4 +1,3 @@
-C:\VSProjects\MyProjects\WifiProject\WifiService\obj\Debug\WifiService.csprojResolveAssemblyReference.cache
 C:\VSProjects\MyProjects\WifiProject\WifiService\bin\WifiService.dll
 C:\VSProjects\MyProjects\WifiProject\WifiService\bin\WifiService.pdb
 C:\VSProjects\MyProjects\WifiProject\WifiService\obj\Debug\WifiService.dll
