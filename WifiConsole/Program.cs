@@ -354,7 +354,6 @@ namespace ConsoleApplication1
       ws.Run();
       Console.WriteLine("WEB Server running : http://" + providerIp + ":" + WSPort + "/");
       #endregion
-
       //if (NFAPI.nf_init("netfilter2", m_eh) != 0)
       //{
       //  Console.Out.WriteLine("Failed to connect to driver");
@@ -370,8 +369,8 @@ namespace ConsoleApplication1
       //NFAPI.nf_addRule(rule, 0);
       Console.ReadLine();
       //NFAPI.nf_free();
-      
-      
+
+
       //packetCount = -1;
       //Console.ReadLine();
       /*
@@ -407,13 +406,13 @@ namespace ConsoleApplication1
       NameValueCollection nvc = HttpUtility.ParseQueryString(Url.Substring(Url.IndexOf("?")));
       return nvc[Param];
     }
-    
+
     public static string SendResponse(HttpListenerRequest request)
     {
 
       if (clients.Find(x => x.Ip == request.RemoteEndPoint.Address.ToString()) == null)
         clients.Add(new Client("", request.RemoteEndPoint.Address.ToString()));
-      
+
       Client _client = clients.Find(x => x.Ip == request.RemoteEndPoint.Address.ToString());
       String url = request.Url.ToString();
       String command = "";
@@ -429,8 +428,7 @@ namespace ConsoleApplication1
       }
       else if (command == "Register")
       {
-        String TelNo = GetUrlParam(url, "TelNo");
-        _temp = WCF.Register(TelNo, "e", 999);
+        _temp = WCF.Register(GetUrlParam(url, "TelNo"), GetUrlParam(url, "PW"), 0);
         if (_temp.Length == 32)
         {
           _client.SecurityCode = _temp;
@@ -496,14 +494,16 @@ namespace ConsoleApplication1
         String _tnh = GetUrlParam(url, "TelNoHash");
         String _cid = GetUrlParam(url, "ConnectionID");
         if (_client.ConnectionID == "")
-          return "error:No Connection on "+_client.Ip + " ("+_client.Mac+")";
+          return "error:No Connection on " + _client.Ip + " (" + _client.Mac + ")";
         else if ((_client.TelNoHash.Equals(_tnh)) && (_client.ConnectionID.ToString().Equals(_cid)))
         {
-          _client.LastQuery = DateTime.Now;
           //return "<a href='SetUsage?Message=" + _client.TelNoHash + (_client.SecurityCode + (TelNoHash + _client.Password).HashMD5() + (usg.ToString()).HashMD5()).HashMD5() + usg.ToString() + "'>SetUsage</a>";
           Console.WriteLine("KULLANIM BILGISI GONDERILDI. KULLANIM : " + _client.Usage.ToString() + " CONNECTION ID : " + _client.ConnectionID.ToString());
           if (_client.Usage > _client.Quota)
+          {
+            _client.ConnectionID = "";
             return "error:Insufficent funds!!!";
+          }
           else
             return _client.Usage.ToString() + ";" + _client.ConnectionID.ToString();
         }
@@ -514,7 +514,7 @@ namespace ConsoleApplication1
         _temp = GetUrlParam(url, "Message");
         String TelNoHash = _temp.Substring(0, 32);
         if (_client.TelNoHash == TelNoHash)
-        { 
+        {
           String amount = _temp.Substring(64);
           amount = WCF.SetUsage(_temp, myEvidence(amount), long.Parse(_client.ConnectionID));
           _client.LastQuery = DateTime.Now;
@@ -527,6 +527,12 @@ namespace ConsoleApplication1
           return amount.Substring(0, 32);
         }
         else return "error:" + _client.TelNoHash + "<>" + TelNoHash;
+      }
+      else if (command == "Disconnect")
+      {
+        _client.ConnectionID = "";
+        Console.WriteLine("BAĞLANTI SONLANDIRILDI. CONNECTION ID : " + GetUrlParam(url, "ConnectionID"));
+        return "BAĞLANTI SONLANDIRILDI. CONNECTION ID : " + GetUrlParam(url, "ConnectionID");
       }
       else
         return "<a href='GetSecurityCode?TelNoHash=5CAA8CD9E281E9A815AD88C79DB734FF&testercument=1'>GetSecurityCode</a>";

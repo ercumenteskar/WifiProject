@@ -2,19 +2,10 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="MainWindow" Height="603" Width="914">
-    <Grid Loaded="Grid_Loaded" Margin="0,2,0,-2">
-        <TextBox x:Name="tb_TelNo" HorizontalAlignment="Left" Height="23" Margin="93,41,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" Text="5448302899"/>
-        <TextBox x:Name="tb_Password" HorizontalAlignment="Left" Height="23" Margin="93,69,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" Text="e"/>
-        <Label Content="Telefon No : " HorizontalAlignment="Left" Margin="10,40,0,0" VerticalAlignment="Top"/>
-        <Label Content="Password : " HorizontalAlignment="Left" Margin="10,66,0,0" VerticalAlignment="Top"/>
-        <Button x:Name="bt_Connect" Content="Connect" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Margin="93,138,0,0" Click="bt_Connect_Click"/>
-        <Label Content="Kota : " HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,92,0,0"/>
-        <TextBox x:Name="tb_Quota" HorizontalAlignment="Left" Height="23" Margin="93,97,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" Text="0"/>
-        <Button x:Name="bt_Remove" Content="Remove" HorizontalAlignment="Left" VerticalAlignment="Top" Width="58" Margin="93,6,0,0" Click="bt_Remove_Click"/>
-        <Button x:Name="bt_Register" Content="Register" HorizontalAlignment="Left" VerticalAlignment="Top" Width="58" Margin="155,6,0,0" Click="bt_Register_Click"/>
-        <TextBox x:Name="m_Log" HorizontalAlignment="Left" Height="490" TextWrapping="Wrap" VerticalAlignment="Top" Width="537" Margin="343,10,0,0" AcceptsReturn="True" RenderTransformOrigin="0.5,0.5"/>
-        <Button x:Name="bt_Refresh" Content="Refresh" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Margin="93,165,0,0" Click="bt_Refresh_Click"/>
-        <ListBox x:Name="lb_networks" HorizontalContentAlignment="Stretch" SelectionMode="Extended" HorizontalAlignment="Left" Height="266" Margin="10,208,0,0" VerticalAlignment="Top" Width="328" MouseDoubleClick="lb_networks_MouseDoubleClick">
+    <Grid x:Name="grid_Main" Loaded="Grid_Loaded" Margin="0,2,0,-2">
+        <TextBox x:Name="m_Log" HorizontalAlignment="Left" Height="553" TextWrapping="Wrap" VerticalAlignment="Top" Width="537" Margin="359,10,0,0" AcceptsReturn="True" RenderTransformOrigin="0.5,0.5"/>
+        <Button x:Name="bt_Refresh" Content="Refresh" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Margin="10,169,0,0" Click="bt_Refresh_Click"/>
+        <ListBox x:Name="lb_networks" HorizontalContentAlignment="Stretch" SelectionMode="Extended" HorizontalAlignment="Left" Height="266" Margin="10,196,0,0" VerticalAlignment="Top" Width="328" MouseDoubleClick="lb_networks_MouseDoubleClick">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Grid Margin="0,2">
@@ -29,6 +20,30 @@
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
+        <TabControl x:Name="tc_RegisterLogin" HorizontalAlignment="Left" Height="154" Margin="10,10,0,0" VerticalAlignment="Top" Width="331">
+            <TabItem x:Name="ti_Register" Header="Giriş">
+                <Grid Background="#FFE5E5E5" Margin="0">
+                    <TextBox x:Name="tb_TelNo" HorizontalAlignment="Left" Height="22" Margin="96,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" Text="5448302899"/>
+                    <PasswordBox x:Name="tb_Password" HorizontalAlignment="Left" Height="22" Margin="96,37,0,0" VerticalAlignment="Top" Width="120" Password="e"/>
+                    <Label Content="Telefon No : " HorizontalAlignment="Left" Margin="0,8,0,0" VerticalAlignment="Top"/>
+                    <Label Content="Parola : " HorizontalAlignment="Left" Margin="0,35,0,0" VerticalAlignment="Top"/>
+                    <Button x:Name="bt_Connect" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Margin="96,64,0,0" Click="bt_Connect_Click" Content="{Binding bt_ConnectContent}" />
+                    <Label x:Name="l_defQuota" Content="Kota : " HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,91,0,0"/>
+                    <Label x:Name="l_Quota" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="96,91,0,0" Width="120" Content="{Binding QuotaStr}" Height="26"/>
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="ti_Login" Header="Kayıt">
+                <Grid Background="#FFE5E5E5">
+                    <TextBox x:Name="tb_RegisterTelNo" HorizontalAlignment="Left" Height="22" Margin="96,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" Text="5448302899"/>
+                    <PasswordBox x:Name="tb_RegisterPassword1" HorizontalAlignment="Left" Height="22" Margin="96,37,0,0" VerticalAlignment="Top" Width="120" Password="e"/>
+                    <Label Content="Telefon No : " HorizontalAlignment="Left" Margin="0,8,0,0" VerticalAlignment="Top"/>
+                    <Label Content="Parola : " HorizontalAlignment="Left" Margin="0,35,0,0" VerticalAlignment="Top"/>
+                    <PasswordBox x:Name="tb_RegisterPassword2" HorizontalAlignment="Left" Height="22" Margin="96,64,0,0" VerticalAlignment="Top" Width="120" Password="e"/>
+                    <Label Content="Parola (Tekrar) : " HorizontalAlignment="Left" Margin="0,62,0,0" VerticalAlignment="Top"/>
+                    <Button x:Name="bt_Register" Content="Register" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Margin="96,91,0,0" Click="bt_Register_Click"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
 
     </Grid>
 </Window>

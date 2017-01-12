@@ -9,3 +9,6 @@ C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Debug\Ionic.Zip.xml
 C:\VSProjects\MyProjects\WifiProject\WifiConsole\obj\Debug\ConsoleApplication1.exe
 C:\VSProjects\MyProjects\WifiProject\WifiConsole\obj\Debug\ConsoleApplication1.pdb
 C:\VSProjects\MyProjects\WifiProject\WifiConsole\obj\Debug\WifiProvider.csprojResolveAssemblyReference.cache
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Debug\PacketDotNet.xml
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Debug\SharpPcap.pdb
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Debug\SharpPcap.xml

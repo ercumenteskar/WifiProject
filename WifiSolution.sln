@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiProvider", "WifiConsole\WifiProvider.csproj", "{4D1E0AEE-EB7F-4384-A76E-D4A477177A57}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiProviderConsole", "WifiConsole\WifiProviderConsole.csproj", "{4D1E0AEE-EB7F-4384-A76E-D4A477177A57}"
 	ProjectSection(ProjectDependencies) = postProject
 		{1668EA5D-0A75-46B0-BA5E-F8AF524CDDEB} = {1668EA5D-0A75-46B0-BA5E-F8AF524CDDEB}
 	EndProjectSection
@@ -9,6 +9,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiWPFClient", "WifiWPFClient\WifiWPFClient.csproj", "{484F599B-CA38-4C00-AC68-2C2107D85179}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiService", "WifiService\WifiService.csproj", "{1668EA5D-0A75-46B0-BA5E-F8AF524CDDEB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiProvider", "WifiProvider\WifiProvider.csproj", "{E77BB196-B13E-4074-829B-7D51243D6255}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1668EA5D-0A75-46B0-BA5E-F8AF524CDDEB} = {1668EA5D-0A75-46B0-BA5E-F8AF524CDDEB}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,6 +33,10 @@ Global
 		{1668EA5D-0A75-46B0-BA5E-F8AF524CDDEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1668EA5D-0A75-46B0-BA5E-F8AF524CDDEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1668EA5D-0A75-46B0-BA5E-F8AF524CDDEB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E77BB196-B13E-4074-829B-7D51243D6255}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E77BB196-B13E-4074-829B-7D51243D6255}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E77BB196-B13E-4074-829B-7D51243D6255}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E77BB196-B13E-4074-829B-7D51243D6255}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
