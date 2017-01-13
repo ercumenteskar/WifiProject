@@ -1,0 +1,16 @@
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Release\ConsoleApplication1.exe.config
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Release\ConsoleApplication1.exe
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Release\ConsoleApplication1.pdb
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Release\ARSoft.Tools.Net.dll
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Release\Ionic.Zip.dll
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Release\nfapinet.dll
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Release\PacketDotNet.dll
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Release\SharpPcap.dll
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Release\BouncyCastle.Crypto.dll
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Release\ARSoft.Tools.Net.xml
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Release\Ionic.Zip.xml
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Release\PacketDotNet.xml
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Release\SharpPcap.pdb
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\bin\Release\SharpPcap.xml
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\obj\Release\ConsoleApplication1.exe
+C:\VSProjects\MyProjects\WifiProject\WifiConsole\obj\Release\ConsoleApplication1.pdb
