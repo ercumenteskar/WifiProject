@@ -113,7 +113,7 @@ namespace WifiWPFClient
       //l_Quota.DataContext = this;
       //txtb.DataContext = this;
       String wfname = connectedWifi();
-      if (!wfname.Equals(""))
+      //if (!wfname.Equals(""))
       {
         if (!Connected)
         {
@@ -123,7 +123,7 @@ namespace WifiWPFClient
         }
         else disconnectFromSys();
       }
-      else MessageBox.Show("Wifi bağlı değil!");
+      //else MessageBox.Show("Wifi bağlı değil!");
     }
 
     private void disconnectFromSys()
@@ -367,8 +367,8 @@ namespace WifiWPFClient
     private void Grid_Loaded(object sender, RoutedEventArgs e)
     {
       tc_RegisterLogin.SelectedIndex = 1;
-      if ((Registry.CurrentUser.OpenSubKey("Wifi") != null) && (Registry.CurrentUser.OpenSubKey("Wifi").GetValue("TelNo")!=null) && (Registry.CurrentUser.OpenSubKey("Wifi").GetValue("TelNo").ToString()!=""))
-        tb_TelNo.Text = Registry.CurrentUser.OpenSubKey("Wifi").GetValue("TelNo").ToString();
+      if ((Registry.CurrentUser.OpenSubKey(_projectName) != null) && (Registry.CurrentUser.OpenSubKey(_projectName).GetValue("TelNo") != null) && (Registry.CurrentUser.OpenSubKey(_projectName).GetValue("TelNo").ToString() != ""))
+        tb_TelNo.Text = Registry.CurrentUser.OpenSubKey(_projectName).GetValue("TelNo").ToString();
       else tb_TelNo.Text = "";
       if (tb_TelNo.Text != "")
       {
@@ -414,6 +414,21 @@ namespace WifiWPFClient
         return false;
       }
     }
+    private bool CheckResult(string result)
+    {
+      if (result.StartsWith("error:"))
+      {
+        result = result.Substring(result.IndexOf(":") + 1);
+        Add2Log(result);
+        MessageBox.Show(result);
+        return false;
+      }
+      else if (result.StartsWith("message:"))
+        result = result.Substring(result.IndexOf(":") + 1);
+      Add2Log(result);
+      MessageBox.Show(result);
+      return true;
+    }
     private void bt_Register_Click(object sender, RoutedEventArgs e)
     {
       string result = "";
@@ -421,26 +436,8 @@ namespace WifiWPFClient
         result = WCF.Register(GetTextBox(tb_RegisterTelNo), GetPasswordBox(tb_RegisterPassword1), 0);
       else
         result = GetWebString("http://192.168.137.1/Register?TelNo=" + GetTextBox(tb_RegisterTelNo) + "&PW=" + GetPasswordBox(tb_RegisterPassword1));
-      if (result.StartsWith("error:"))
-      {
-        result = result.Substring(result.IndexOf(":"));
-        Add2Log(result);
-        MessageBox.Show(result);
-        return;
-      }
-      else if (result.StartsWith("message:"))
-      {
-        result = result.Substring(result.IndexOf(":"));
-        Add2Log(result);
-        MessageBox.Show(result);
-      } 
-      else if (result=="")
-      {
-        result = "Bağlantı sağlanamadı.";
-        Add2Log(result);
-        MessageBox.Show(result);
-      }
-      else
+      if (result == "") result = "error:Bağlantı sağlanamadı.";
+      if (CheckResult(result))
       {
         result = "Kayıt başarılı. Giriş yapılacak.";
         Add2Log(result);

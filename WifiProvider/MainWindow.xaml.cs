@@ -17,6 +17,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Threading;
 using System.Web;
+using Microsoft.Win32;
 //using System.Net.Http;
 
 namespace WifiProvider
@@ -30,6 +31,7 @@ namespace WifiProvider
     {
       InitializeComponent();
     }
+    private const string _projectName = "Wifi";
     private string TelNo = "5448302898";
     private String TelNoHash = "";
     private String Password = "e";
@@ -187,6 +189,7 @@ namespace WifiProvider
           MacAddr = MacAddr.Substring(0, 2) + MacAddr.Substring(2, 2) + MacAddr.Substring(4, 2) + MacAddr.Substring(6, 2) + MacAddr.Substring(8, 2) + MacAddr.Substring(10, 2);
         this.Mac = MacAddr;
         this.Ip = IpAddr;
+        this.Online = false;
       }
     }
     public List<Client> clients = new List<Client>();
@@ -350,6 +353,7 @@ namespace WifiProvider
       //*/
       Add2Log("HotSpot Opened");
 
+      /*
       #region DNS SERVER
       dnsServer = new DnsServer(IPAddress.Any, 10, 10);
       dnsServer.QueryReceived += OnQueryReceived;
@@ -360,6 +364,7 @@ namespace WifiProvider
       //      var gp = IcsManager.FindConnectionByIdOrName(hotspot);
       //EnableICS(source, hotspot, true);
       Add2Log("Internet Connection Sharing Enabled");
+      */
       //if (NFAPI.nf_init("netfilter2", m_eh) != 0)
       //{
       //  Console.Out.WriteLine("Failed to connect to driver");
@@ -629,8 +634,6 @@ namespace WifiProvider
         if (ip != null)
           d_ip = ip.DestinationAddress.ToString();
         if ((devmac != s_mac) || (providerIp == d_ip)) return;
-        if (d_mac.StartsWith("40"))
-          s_mac = eth.SourceHwAddress.ToString();
         long PackSize = e.Packet.Data.Length;
         Client cl = clients.Find(x => x.Mac == d_mac);
         if (cl == null) 
@@ -639,13 +642,27 @@ namespace WifiProvider
           clients.Add(cl);
           Add2Log(cl.Mac + "("+cl.Ip+") Added");
         }
-        else if ((cl.Ip == "") && (d_ip != ""))
+        else if ((cl.Ip == "") && (d_ip != ""))// Bu mac adresi için 2. sefer ise ve öncekinde ip adresi yoktuysa
           cl.Ip = d_ip; // ilk gelişinde ip istemek için geliyor, haliyle kayıtlarda ip adresi yok. 
-        cl.Usage += PackSize;
-        if (cl.Usage >= cl.Quota) 
+        else if (cl.Ip != d_ip) // Bu mac adresi için önceden yapılan kayıttan sonra ip adresi değişti ise
+        {
           cl.Online = false;
-        //Add2Log(cl.Mac + " : " + (cl.Usage / 1024).ToString("###,###,##0"));
-        Console.WriteLine(cl.Mac + " : " + (cl.Usage / 1024).ToString("###,###,##0"));
+          clients.Remove(cl);
+          return;
+        }
+        if (cl.Online)
+        {
+          cl.Usage += PackSize;
+          if (cl.Usage >= cl.Quota)
+          {
+            cl.Online = false;
+            clients.Remove(cl);
+            Console.WriteLine(cl.Mac + " kotasını bitirdiği için bağlantısı kesildi. ");
+            return;
+          }
+          //Add2Log(cl.Mac + " : " + (cl.Usage / 1024).ToString("###,###,##0"));
+          Console.WriteLine(cl.Mac + " : " + (cl.Usage / 1024).ToString("###,###,##0"));
+        }
         //if (s_mac.StartsWith("40")) //(yetkili(clients.Find(x => x.Mac == key)))
         /*
         {
@@ -662,6 +679,7 @@ namespace WifiProvider
         */
       }
     }
+/*
 
     async Task OnQueryReceived(object sender, QueryReceivedEventArgs e)
     {
@@ -701,10 +719,9 @@ namespace WifiProvider
         }
 
         e.Response = response;
-        //*/
       }
     }
-
+*/    
     private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
     {
       Add2Log("Kapatılıyor, lütfen bekleyin...");
@@ -716,7 +733,23 @@ namespace WifiProvider
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
+      /*
+      tc_RegisterLogin.SelectedIndex = 1;
+      if ((Registry.CurrentUser.OpenSubKey(_projectName) != null) && (Registry.CurrentUser.OpenSubKey(_projectName).GetValue("TelNo") != null) && (Registry.CurrentUser.OpenSubKey(_projectName).GetValue("TelNo").ToString() != ""))
+        tb_TelNo.Text = Registry.CurrentUser.OpenSubKey(_projectName).GetValue("TelNo").ToString();
+      else tb_TelNo.Text = "";
+      if (tb_TelNo.Text != "")
+      {
+        tc_RegisterLogin.SelectedIndex = 0;
+        tb_Password.Focus();
+      }
+      */
       Maini();
+    }
+
+    private void bt_Register_Click(object sender, RoutedEventArgs e)
+    {
+
     }
 
   }

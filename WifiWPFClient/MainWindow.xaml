@@ -27,7 +27,7 @@
                     <PasswordBox x:Name="tb_Password" HorizontalAlignment="Left" Height="22" Margin="96,37,0,0" VerticalAlignment="Top" Width="120" Password="e"/>
                     <Label Content="Telefon No : " HorizontalAlignment="Left" Margin="0,8,0,0" VerticalAlignment="Top"/>
                     <Label Content="Parola : " HorizontalAlignment="Left" Margin="0,35,0,0" VerticalAlignment="Top"/>
-                    <Button x:Name="bt_Connect" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Margin="96,64,0,0" Click="bt_Connect_Click" Content="{Binding bt_ConnectContent}" />
+                    <Button x:Name="bt_Connect" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Margin="96,64,0,0" Click="bt_Connect_Click" Content="{Binding bt_ConnectContent}" Height="22" />
                     <Label x:Name="l_defQuota" Content="Kota : " HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,91,0,0"/>
                     <Label x:Name="l_Quota" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="96,91,0,0" Width="120" Content="{Binding QuotaStr}" Height="26"/>
                 </Grid>
