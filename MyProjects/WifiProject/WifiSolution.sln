@@ -7,6 +7,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiProviderConsole", "Wifi
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiWPFClient", "WifiWPFClient\WifiWPFClient.csproj", "{484F599B-CA38-4C00-AC68-2C2107D85179}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1668EA5D-0A75-46B0-BA5E-F8AF524CDDEB} = {1668EA5D-0A75-46B0-BA5E-F8AF524CDDEB}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiService", "WifiService\WifiService.csproj", "{1668EA5D-0A75-46B0-BA5E-F8AF524CDDEB}"
 EndProject

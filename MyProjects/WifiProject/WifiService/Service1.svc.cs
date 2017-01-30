@@ -56,7 +56,16 @@ namespace WifiService
       Params.Add(new SqlParameter("@Pass", Pass));
       Params.Add(new SqlParameter("@Quota", System.Data.DbType.Int64) { Value = Quota });
       Params.Add(new SqlParameter("@SecurityCode", ""));
-      return mfn.SelectToDS("Exec dbo.spr_Register @TelNo, @Pass, @Quota, @SecurityCode OUTPUT; Select @SecurityCode", Params).Tables[0].Rows[0][0].ToString().Trim();
+      DataTable tbl = mfn.SelectToDS("Exec dbo.spr_Register @TelNo, @Pass, @Quota, @SecurityCode OUTPUT; Select @SecurityCode", Params).Tables[0];
+      if (tbl.Columns[0].ColumnName.Equals("mType")){
+        String args = tbl.Rows[0]["mArgs"].ToString();
+        String cnt = tbl.Rows[0]["mContent"].ToString();
+        for (int i = 1; i <= args.Split(';').Length; i++)
+			    cnt = cnt.Replace("%s"+i.ToString(), args.Split(';')[i-1]);
+        return "error:"+cnt;
+      }
+      else 
+      return tbl.Rows[0][0].ToString().Trim();
     }
 
     // Remove, TAMAMEN TESTLERİN HIZLI UYGULANABİLMESİ İÇİN OLUŞTURULDU, SİLİNECEK
