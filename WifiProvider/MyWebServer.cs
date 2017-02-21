@@ -65,7 +65,7 @@ namespace WifiProvider
                 }
                 
               }
-              catch { } // suppress any exceptions
+              //catch { } // suppress any exceptions SendResponse içindeki tüm hataları yutuyordu, debug etmeden hatanın ne olduğunu anlamıyordum...
               finally
               {
                 // always close the stream
