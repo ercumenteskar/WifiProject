@@ -1,5 +1,3 @@
-C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\MainWindow.baml
-C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\MainWindow.g.cs
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\App.g.cs
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider_MarkupCompile.cache
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.g.resources
@@ -10,9 +8,10 @@ C:\VSProjects\MyProjects\WifiProject\WifiProvider\bin\Debug\WifiProvider.exe
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\bin\Debug\WifiProvider.pdb
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\bin\Debug\ARSoft.Tools.Net.dll
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\bin\Debug\Ionic.Zip.dll
-C:\VSProjects\MyProjects\WifiProject\WifiProvider\bin\Debug\nfapinet.dll
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\bin\Debug\PacketDotNet.dll
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\bin\Debug\SharpPcap.dll
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.exe
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.pdb
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.csprojResolveAssemblyReference.cache
+C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\ProviderMainWindow.baml
+C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\ProviderMainWindow.g.cs
