@@ -21,6 +21,7 @@ using System.Threading;
 using System.Net.NetworkInformation;
 using Microsoft.Win32;
 using System.ComponentModel;
+using System.Globalization;
 
 namespace WifiWPFClient
 {
@@ -33,7 +34,7 @@ namespace WifiWPFClient
     private const string _projectregaddr = "Software\\" + _projectName;
     String wifiprefix = "";
     //String providerMAC = "";// Her provider aynı mac olsun istersem bunu doldururum.
-    //private String TelNo = "5448302899";
+    //private String Email = "5448302899";
     private String Password = "e";
     private String SecurityCode = "";
     //private String _connId = "";
@@ -49,20 +50,29 @@ namespace WifiWPFClient
     //private List<Conn> ConnList = new List<Conn>();
     //private ICaptureDevice device;
     List<WifiType> wifis = new List<WifiType>();
-    public static WifiService.Service1Client WCF;
+    public static WifiService.Service1Client _WCF;
     public event PropertyChangedEventHandler PropertyChanged;
-    private void OnPropertyChanged(String property){if (PropertyChanged != null){PropertyChanged(this, new PropertyChangedEventArgs(property));}}
+    private void OnPropertyChanged(String property) { if (PropertyChanged != null) { PropertyChanged(this, new PropertyChangedEventArgs(property)); } }
     public string bt_ConnectContent { get { return Connected ? "Disconnect" : "Connect"; } }
     private long _quota = -1;
     public long Quota { get { return _quota; } set { _quota = value; OnPropertyChanged("QuotaStr"); } }
-    public string QuotaStr {get { return (Quota / 1024).ToString("###,###,###,###,##0"); } }
+    public string QuotaStr { get { return (Quota / 1024).ToString("###,###,###,###,##0 KB"); } }
     public long ConnectionID = 0;
     public String ssid = "";
     public long Usage = 0;
     public long startUsage = 0;
     private bool _connected = false;
     public bool Connected { get { return _connected; } set { _connected = value; OnPropertyChanged("bt_ConnectContent"); } }
-
+    string langCode = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+    public WifiService.Service1Client WCF
+    {
+      get
+      {
+        if (_WCF == null)
+          _WCF = new WifiService.Service1Client();
+        return _WCF;
+      }
+    }
     public class WifiType
     {
       public string SSIDName { get; set; }
@@ -81,12 +91,12 @@ namespace WifiWPFClient
 
     private String GetSecurityCode()
     {
-      return GetWebString("http://192.168.137.1/GetSecurityCode?TelNoHash=" + GetTextBox(tb_TelNo).HashMD5());
+      return GetWebString("http://192.168.137.1/GetSecurityCode?EmailHash=" + GetTextBox(tb_Email).HashMD5());
     }
 
     private void SetSecurityCode()
     {
-      SecurityCode = GetWebString("http://192.168.137.1/GetSecurityCode?TelNoHash=" + GetTextBox(tb_TelNo).HashMD5());
+      SecurityCode = GetWebString("http://192.168.137.1/GetSecurityCode?EmailHash=" + GetTextBox(tb_Email).HashMD5());
     }
 
     private String GetWebString(String Url)
@@ -111,25 +121,21 @@ namespace WifiWPFClient
       //l_Quota.DataContext = this;
       //txtb.DataContext = this;
       String wfname = connectedWifi();
-      if (!wfname.Equals(""))
+      //TODOTESTif (!wfname.Equals(""))
       {
         if (!Connected)
         {
           if (GetWebString("http://192.168.137.1") == "")
             MessageBox.Show("wifiAfterConnect : Wifi is not in the system");
-          else if ((GetTextBox(tb_TelNo) != "") && (GetPasswordBox(tb_Password) != ""))
+          else if ((GetTextBox(tb_Email) != "") && (GetPasswordBox(tb_Password) != ""))
           {
-            if (GetTextBox(tb_TelNo)!="")
-              Add2Log(GetTextBox(tb_TelNo)+"-BOŞ DEĞİL");
-            if (GetPasswordBox(tb_Password) != "")
-              Add2Log(GetPasswordBox(tb_Password) + "-BOŞ DEĞİL");
             connect2Sys();
           }
-          else MessageBox.Show("Telefon numarası veya Parola boş!");
+          else MessageBox.Show("E-Posta veya Parola boş!");
         }
         else disconnectFromSys();
       }
-      else MessageBox.Show("Wifi bağlı değil!");
+      //TODOTESTelse MessageBox.Show("Wifi bağlı değil!");
     }
 
     private void disconnectFromSys()
@@ -166,7 +172,7 @@ namespace WifiWPFClient
 
     void wlanIface_WlanConnectionNotification(Wlan.WlanNotificationData notifyData, Wlan.WlanConnectionNotificationData connNotifyData)
     {
-      ///* tb_TelNo thread içinden çalıştığı için access violation alıyoruz. Aşmanın yöntemi var ama şimdilik otomatik login i kapatıyorum...
+      ///* tb_Email thread içinden çalıştığı için access violation alıyoruz. Aşmanın yöntemi var ama şimdilik otomatik login i kapatıyorum...
       String _wfname = connectedWifi();
       if (!_wfname.Equals(lastWifiName))
       {
@@ -232,7 +238,7 @@ namespace WifiWPFClient
     {
       while (Connected)
       {
-        String _tmp = GetWebString("http://192.168.137.1/GetUsage?TelNoHash=" + GetTextBox(tb_TelNo).HashMD5() + "&ConnectionID=" + ConnectionID.ToString());
+        String _tmp = GetWebString("http://192.168.137.1/GetUsage?EmailHash=" + GetTextBox(tb_Email).HashMD5() + "&ConnectionID=" + ConnectionID.ToString());
         UsageStats(); // Kendi bilgilerini de güncelle...
         if ((_tmp.StartsWith("error:")) || (_tmp.Length < 3) || (!_tmp.Contains(";")))
         {
@@ -247,12 +253,12 @@ namespace WifiWPFClient
         else
         {
           long usg = long.Parse(_tmp.Substring(0, _tmp.IndexOf(";")));
-          if (Usage >= usg) // şimdilik 1 kb sus payı // +1000 Bağlandığımız sıradaki BytesReceived bilgisini StartUsage e atamayı bağlanmadan hemen önceki kısma taşıdım. Gerek kalmamış olması lazım. Yine false alarm verirse 1000 i tekrar eklerim. 
+          if (true)//(Usage >= usg) // şimdilik 1 kb sus payı // +1000 Bağlandığımız sıradaki BytesReceived bilgisini StartUsage e atamayı bağlanmadan hemen önceki kısma taşıdım. Gerek kalmamış olması lazım. Yine false alarm verirse 1000 i tekrar eklerim. 
           {
             if (usg > 0)
               Add2Log("GetUsage: ConnectionID: " + _tmp.Substring(_tmp.IndexOf(";") + 1) + " Usage:" + usg.ToString("###,###,###,###") + " server-client ölçümü:" + (usg - Usage).ToString("###,###,###,###"));
             Quota = (Quota - usg) > 0 ? Quota - usg : 0;
-            _tmp = GetWebString("http://192.168.137.1/SetUsage?Message=" + GetTextBox(tb_TelNo).HashMD5() + (SecurityCode + (GetTextBox(tb_TelNo).HashMD5() + Password).HashMD5() + (usg.ToString()).HashMD5()).HashMD5() + usg.ToString());
+            _tmp = GetWebString("http://192.168.137.1/SetUsage?Message=" + GetTextBox(tb_Email).HashMD5() + (SecurityCode + (GetTextBox(tb_Email).HashMD5() + Password).HashMD5() + (usg.ToString()).HashMD5()).HashMD5() + usg.ToString());
             if (Quota == 0)
               disconnectWifi();
             //SetLabel(l_Quota, QuotaStr);
@@ -370,7 +376,7 @@ namespace WifiWPFClient
       wlanIface.SetProfile(Wlan.WlanProfileFlags.AllUser, _cstr, true);
     }
 
-    
+
     public static bool CheckForInternetConnection()
     {
       try
@@ -403,32 +409,86 @@ namespace WifiWPFClient
       MessageBox.Show(result);
       return true;
     }
-    private void bt_Register_Click(object sender, RoutedEventArgs e)
+
+    public static T Runner<T>(Func<T> funcToRun)
     {
-      string result = "";
-      if (CheckForInternetConnection())
+      T rtn = funcToRun();
+      String str = (String)(object)rtn.ToString();
+      if (str == "")
+        return (T)(object)"¶E:Bağlantı sağlanamadı.";
+      else
+        return rtn;
+    }
+
+    private bool CheckResult(ref string result)
+    {
+      // rtn true ise checkresult sonrasında komut (Ör: WCF.Register) çalıştırılır, false ise çalıştırılmaz
+      // result null döndürülürse komut çalıştırlmadığı gibi dış method da sonlandırılır (Ör: bt_registerclick)
+      bool rtn = false;
+      if (result == null)
       {
-        try
+        result = "";
+        rtn = true;
+      }
+      else if (result.Contains("¶")) //¶ : ASCII 20
+      {
+        string[] sl = result.Split('¶');
+        result = result.Substring(0, result.IndexOf("¶"));
+        for (int i = 1; i < sl.Length; i++)
         {
-          if (WCF == null)
-            WCF = new WifiService.Service1Client();
-          result = WCF.Register(GetTextBox(tb_RegisterTelNo), GetPasswordBox(tb_RegisterPassword1), 0);
-        }
-        catch (Exception)
-        {
-          result = "";
+          if (sl[i].StartsWith("M:")) // Message
+          {
+            Add2Log(sl[i]);
+            MessageBox.Show(sl[i].Substring(sl[i].IndexOf(":") + 1), "", MessageBoxButton.OK, MessageBoxImage.Asterisk);
+          }
+          else if (sl[i].StartsWith("Q:")) // Question
+          {
+            Add2Log(sl[i]); // //§ : ASCII 21
+            bool cevaplimi = sl[i].Substring(sl[i].IndexOf("§") + 1).StartsWith("-");
+            MessageBoxButton mbb = sl[i].Substring(sl[i].IndexOf("§") + 1) == "OK" ? MessageBoxButton.OK : sl[i].Substring(sl[i].IndexOf("§") + 1) == "OKCancel" ? MessageBoxButton.OKCancel : sl[i].Substring(sl[i].IndexOf("§") + 1) == "YesNo" ? MessageBoxButton.YesNo : sl[i].Substring(sl[i].IndexOf("§") + 1) == "YesNoCancel" ? MessageBoxButton.YesNoCancel : MessageBoxButton.OK;
+            MessageBoxResult mbr = MessageBoxResult.None;
+            while (mbr == MessageBoxResult.None)
+              mbr = cevaplimi ?
+                 (
+                    sl[i].Substring(sl[i].IndexOf("§") + 1).Substring(1) == MessageBoxResult.Cancel.ToString() ? MessageBoxResult.Cancel
+                  : sl[i].Substring(sl[i].IndexOf("§") + 1).Substring(1) == MessageBoxResult.No.ToString() ? MessageBoxResult.No
+                  : sl[i].Substring(sl[i].IndexOf("§") + 1).Substring(1) == MessageBoxResult.OK.ToString() ? MessageBoxResult.OK
+                  : sl[i].Substring(sl[i].IndexOf("§") + 1).Substring(1) == MessageBoxResult.Yes.ToString() ? MessageBoxResult.Yes
+                  : MessageBoxResult.None
+                )
+                : MessageBox.Show(sl[i].OrtasiniGetir(":", "§"), "", mbb, MessageBoxImage.Question);
+            result = result + "¶Q:" + sl[i].OrtasiniGetir(":", "§") + "§-" + mbr.ToString(); // (ör: soru1§cevap1¶soru2§cevap2)
+            rtn = rtn || !cevaplimi;
+          }
+          else if (sl[i].StartsWith("E:")) // Error
+          {
+            Add2Log(sl[i]);
+            MessageBox.Show(sl[i].Substring(sl[i].IndexOf(":") + 1), "", MessageBoxButton.OK, MessageBoxImage.Error);
+            result = null;
+          }
         }
       }
-      else
-        result = GetWebString("http://192.168.137.1/Register?TelNo=" + GetTextBox(tb_RegisterTelNo) + "&PW=" + GetPasswordBox(tb_RegisterPassword1));
+      //else rtn = false;
+      return rtn;
+    }
+
+    private void bt_Register_Click(object sender, RoutedEventArgs e)
+    {
+      string result = null;
+      while (CheckResult(ref result))
+      {
+        if (CheckForInternetConnection())
+          result = Runner(() => WCF.Register(GetTextBox(tb_RegisterEmail), GetPasswordBox(tb_RegisterPassword1), langCode, result));
+        else
+          result = GetWebString("http://192.168.137.1/Register?Email=" + GetTextBox(tb_RegisterEmail) + "&PW=" + GetPasswordBox(tb_RegisterPassword1));
+      }
+      if (result == null) return;
       if (result == "") result = "error:Bağlantı sağlanamadı.";
       if (CheckResult(result))
       {
         result = "Kayıt başarılı. Giriş yapılacak.";
-        Add2Log(result);
-        MessageBox.Show(result);
         tc_RegisterLogin.SelectedIndex = 0;
-        SetTextBox(tb_TelNo, GetTextBox(tb_RegisterTelNo));
+        SetTextBox(tb_Email, GetTextBox(tb_RegisterEmail));
         SetPasswordBox(tb_Password, GetPasswordBox(tb_RegisterPassword1));
         bt_Connect.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
       }
@@ -528,8 +588,8 @@ namespace WifiWPFClient
     private void connect2Sys()
     {
       Add2Log("connectSys : started");
-      //Add2Log(GetTextBox(tb_TelNo) + "  "+GetPasswordBox(tb_Password));
-      //TelNo = tb_TelNo.Text;
+      //Add2Log(GetTextBox(tb_Email) + "  "+GetPasswordBox(tb_Password));
+      //Email = tb_Email.Text;
       //Password = tb_Password.Text;
       SetSecurityCode();
       if (SecurityCode.StartsWith("error:"))
@@ -543,14 +603,13 @@ namespace WifiWPFClient
         return;
       };
       Add2Log("SecurityCode alındı : " + SecurityCode);
-      String _tmp = GetWebString("http://192.168.137.1/Login?Evidence=" + GetTextBox(tb_TelNo).HashMD5() + (SecurityCode + (GetTextBox(tb_TelNo).HashMD5() + Password).HashMD5() + ("").HashMD5()).HashMD5());
+      String _tmp = GetWebString("http://192.168.137.1/Login?Evidence=" + GetTextBox(tb_Email).HashMD5() + (SecurityCode + (GetTextBox(tb_Email).HashMD5() + Password).HashMD5() + ("").HashMD5()).HashMD5());
       Quota = 0;
       if ((_tmp.Length > 33) && (_tmp.Substring(32, 1) == ";"))
       {
         Quota = long.Parse(_tmp.Substring(33));
         SecurityCode = _tmp.Substring(0, 32);
         //SetLabel(l_Quota, QuotaStr);
-        RememberAction();
         Add2Log("Login başarılı");
       }
       else
@@ -562,7 +621,7 @@ namespace WifiWPFClient
         return;
       }
       long stus = wlanIface.NetworkInterface.GetIPStatistics().BytesReceived;
-      _tmp = GetWebString("http://192.168.137.1/ConnectUS?ClientEvidence=" + GetTextBox(tb_TelNo).HashMD5() + (SecurityCode + (GetTextBox(tb_TelNo).HashMD5() + Password).HashMD5() + ("").HashMD5()).HashMD5());
+      _tmp = GetWebString("http://192.168.137.1/ConnectUS?ClientEvidence=" + GetTextBox(tb_Email).HashMD5() + (SecurityCode + (GetTextBox(tb_Email).HashMD5() + Password).HashMD5() + ("").HashMD5()).HashMD5());
       if ((_tmp.Length > 33) && (_tmp.Substring(32, 1) == ";"))
       {
         SecurityCode = _tmp.Substring(0, 32);
@@ -570,6 +629,7 @@ namespace WifiWPFClient
         Add2Log("Bağlantı sağlandı. ConnectionID : " + cid.ToString());
         //conn = new Conn() { 
         ConnectionID = cid; ssid = connectedWifi(); Usage = 0; startUsage = stus; Connected = true;
+        RememberAction();
         //};
       }
       else
@@ -592,38 +652,45 @@ namespace WifiWPFClient
 
     private void RememberAction(object sender = null)
     {
-      if ((sender == cb_TelNoRemember) || (sender == null))
+      SimpleAES saes = new SimpleAES();
+      if ((sender == cb_CEmailRemember) || (sender == null))
       {
-        if ((cb_TelNoRemember.IsChecked == true) && (Connected))
-          Registry.CurrentUser.CreateSubKey(_projectregaddr).SetValue(cb_TelNoRemember.Name.Substring(3), GetTextBox(tb_TelNo));
-        else if (cb_TelNoRemember.IsChecked == false) Registry.CurrentUser.CreateSubKey(_projectregaddr).SetValue(cb_TelNoRemember.Name.Substring(3), "");
+        if ((cb_CEmailRemember.IsChecked == true) && (Connected))
+          Registry.CurrentUser.CreateSubKey(_projectregaddr).SetValue(cb_CEmailRemember.Name.Substring(3), saes.EncryptToString(GetTextBox(tb_Email)));
+        else if (cb_CEmailRemember.IsChecked == false) Registry.CurrentUser.CreateSubKey(_projectregaddr).SetValue(cb_CEmailRemember.Name.Substring(3), "");
       }
-      if ((sender == cb_PassRemember) || (sender == null))
+      if ((sender == cb_CPassRemember) || (sender == null))
       {
-        if ((cb_PassRemember.IsChecked == true) && (Connected))
-          Registry.CurrentUser.CreateSubKey(_projectregaddr).SetValue(cb_PassRemember.Name.Substring(3), GetPasswordBox(tb_Password));
-        else if (cb_PassRemember.IsChecked == false) Registry.CurrentUser.CreateSubKey(_projectregaddr).SetValue(cb_PassRemember.Name.Substring(3), "");
+        if ((cb_CPassRemember.IsChecked == true) && (Connected))
+          Registry.CurrentUser.CreateSubKey(_projectregaddr).SetValue(cb_CPassRemember.Name.Substring(3), saes.EncryptToString(GetPasswordBox(tb_Password)));
+        else if (cb_CPassRemember.IsChecked == false) Registry.CurrentUser.CreateSubKey(_projectregaddr).SetValue(cb_CPassRemember.Name.Substring(3), "");
       }
     }
 
     private void mainWindow_Loaded(object sender, RoutedEventArgs e)
     {
+      SimpleAES saes = new SimpleAES();
       tc_RegisterLogin.SelectedIndex = 1;
-      if ((Registry.CurrentUser.OpenSubKey(_projectregaddr) != null) && (Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue(cb_TelNoRemember.Name.Substring(3)) != null) && (Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue(cb_TelNoRemember.Name.Substring(3)).ToString() != ""))
-        tb_TelNo.Text = Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue(cb_TelNoRemember.Name.Substring(3)).ToString();
-      if ((Registry.CurrentUser.OpenSubKey(_projectregaddr) != null) && (Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue(cb_PassRemember.Name.Substring(3)) != null) && (Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue(cb_PassRemember.Name.Substring(3)).ToString() != ""))
-        tb_Password.Password = Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue(cb_PassRemember.Name.Substring(3)).ToString();
-      if (tb_TelNo.Text != "") cb_TelNoRemember.IsChecked = true;
-      if (tb_Password.Password != "") cb_PassRemember.IsChecked = true;
-      if ((tb_TelNo.Text != "") || (tb_Password.Password != ""))
+      if ((Registry.CurrentUser.OpenSubKey(_projectregaddr) != null) && (Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue(cb_CEmailRemember.Name.Substring(3)) != null) && (Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue(cb_CEmailRemember.Name.Substring(3)).ToString() != ""))
+        tb_Email.Text = saes.DecryptToString(Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue(cb_CEmailRemember.Name.Substring(3)).ToString());
+      if ((Registry.CurrentUser.OpenSubKey(_projectregaddr) != null) && (Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue(cb_CPassRemember.Name.Substring(3)) != null) && (Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue(cb_CPassRemember.Name.Substring(3)).ToString() != ""))
+        tb_Password.Password = saes.DecryptToString(Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue(cb_CPassRemember.Name.Substring(3)).ToString());
+      if (tb_Email.Text != "") cb_CEmailRemember.IsChecked = true;
+      if (tb_Password.Password != "") cb_CPassRemember.IsChecked = true;
+      if ((tb_Email.Text != "") || (tb_Password.Password != ""))
       {
         tc_RegisterLogin.SelectedIndex = 0;
-        if ((tb_TelNo.Text != "") && (tb_Password.Password != ""))
+        if ((tb_Email.Text != "") && (tb_Password.Password != ""))
           bt_Connect.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        else if (tb_TelNo.Text != "")
-          tb_Password.Focus();
+        else if (tb_Email.Text != "")
+          Dispatcher.BeginInvoke(
+            DispatcherPriority.ContextIdle,
+            new Action(delegate()
+                {
+                  tb_Password.Focus();
+                }));
         else if (tb_Password.Password != "")
-          tb_TelNo.Focus();
+          tb_Email.Focus();
       }
       wlanIface.WlanConnectionNotification += wlanIface_WlanConnectionNotification;
       mainWindow.DataContext = this;
@@ -645,7 +712,6 @@ namespace WifiWPFClient
       //Add2Log("Kayıt tamamlandı.");
       //bt_Connect_Click(bt_Connect, null);
     }
-
 
   }
 }

@@ -3,7 +3,7 @@
   <xs:element name="GetSecurityCode">
     <xs:complexType>
       <xs:sequence>
-        <xs:element minOccurs="0" name="TelNoHash" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="EmailHash" nillable="true" type="xs:string" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -62,9 +62,10 @@
   <xs:element name="Register">
     <xs:complexType>
       <xs:sequence>
-        <xs:element minOccurs="0" name="TelNo" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="Email" nillable="true" type="xs:string" />
         <xs:element minOccurs="0" name="Pass" nillable="true" type="xs:string" />
-        <xs:element minOccurs="0" name="Quota" type="xs:long" />
+        <xs:element minOccurs="0" name="LangId" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="AFQ" nillable="true" type="xs:string" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -78,7 +79,7 @@
   <xs:element name="Remove">
     <xs:complexType>
       <xs:sequence>
-        <xs:element minOccurs="0" name="TelNo" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="Email" nillable="true" type="xs:string" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>

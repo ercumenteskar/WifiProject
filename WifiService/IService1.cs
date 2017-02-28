@@ -12,7 +12,7 @@ namespace WifiService
   public interface IService1
   {
     [OperationContract]
-    String GetSecurityCode(String TelNoHash);
+    String GetSecurityCode(String EmailHash);
     [OperationContract]
     String Login(String Evidence);
     [OperationContract]
@@ -20,10 +20,10 @@ namespace WifiService
     [OperationContract]
     String SetUsage(String ClientUsageMsg, String ProviderUsageMsg, long ConnectionID);
     [OperationContract]
-    String Register(String @TelNo, String @Pass, long @Quota);
+    String Register(String @Email, String @Pass, String LangId, String @AFQ);
     [OperationContract]
     // Remove, TAMAMEN TESTLERİN HIZLI UYGULANABİLMESİ İÇİN OLUŞTURULDU, SİLİNECEK
-    void Remove(String @TelNo);
+    void Remove(String @Email);
     //[OperationContract]
     //[OperationContract]
     //[OperationContract]
