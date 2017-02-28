@@ -13,12 +13,12 @@ namespace WifiService
   // NOTE: You can use the "Rename" command on the "Refactor" menu to change the class name "Service1" in both code and config file together.
   public class Service1 : IService1
   {
-    public String GetSecurityCode(String TelNoHash)
+    public String GetSecurityCode(String EmailHash)
     {
       List<SqlParameter> Params = new List<SqlParameter>();
       //      Params.Add(new SqlParameter("@Id", System.Data.DbType.Int32) { Value = Convert.ToInt32(Id) });
-      Params.Add(new SqlParameter("@TelNoHash", TelNoHash));
-      return mfn.SelectToDS("Exec dbo.spr_GetSecurityCode @TelNoHash OUTPUT; Select @TelNoHash", Params).Tables[0].Rows[0][0].ToString();
+      Params.Add(new SqlParameter("@EmailHash", EmailHash));
+      return mfn.SelectToDS("Exec dbo.spr_GetSecurityCode @EmailHash OUTPUT; Select @EmailHash", Params).Tables[0].Rows[0][0].ToString();
     }
 
     public String Login(String Evidence)
@@ -48,32 +48,53 @@ namespace WifiService
       return ds.Tables[0].Rows[0][0].ToString().Trim() + ";" + ds.Tables[0].Rows[0][1].ToString().Trim();
     }
 
-    public String Register(String @TelNo, String @Pass, long @Quota)
+    public String Register(String @Email, String @Pass, String LangCode, String @AFQ)
     {
-      Quota = 1024000000;
       List<SqlParameter> Params = new List<SqlParameter>();
-      Params.Add(new SqlParameter("@TelNo", TelNo));
+      Params.Add(new SqlParameter("@Email", Email));
       Params.Add(new SqlParameter("@Pass", Pass));
-      Params.Add(new SqlParameter("@Quota", System.Data.DbType.Int64) { Value = Quota });
+      Params.Add(new SqlParameter("@LangId", System.Data.DbType.Int32) { Value = (LangCode=="tr" ? 2 : 1) });
       Params.Add(new SqlParameter("@SecurityCode", ""));
-      DataTable tbl = mfn.SelectToDS("Exec dbo.spr_Register @TelNo, @Pass, @Quota, @SecurityCode OUTPUT; Select @SecurityCode", Params).Tables[0];
-      if (tbl.Columns[0].ColumnName.Equals("mType")){
-        String args = tbl.Rows[0]["mArgs"].ToString();
-        String cnt = tbl.Rows[0]["mContent"].ToString();
-        for (int i = 1; i <= args.Split(';').Length; i++)
-			    cnt = cnt.Replace("%s"+i.ToString(), args.Split(';')[i-1]);
-        return "error:"+cnt;
+      Params.Add(new SqlParameter("@AFQ", AFQ));
+      string rtn = "";
+      try
+      {
+        DataTable tbl = mfn.SelectToDS(AFQSql() + "Exec dbo.spr_Register @Email, @Pass, @LangId, @SecurityCode OUTPUT; Select @SecurityCode", Params).Tables[0];
+        rtn = tbl.Rows[0][0].ToString().Trim(); 
       }
-      else 
-      return tbl.Rows[0][0].ToString().Trim();
+      catch (Exception e)
+      {
+        if (e.Message[0] == '¶')
+          rtn = @AFQ + e.Message;
+        else 
+        {
+          string inx = mfn.GetSqlResult("insert Errorlog (msg) Select '" + e.Message.Replace("'", "''") + "'; Select SCOPE_IDENTITY()");
+          rtn = "¶E:Hata oluştu. Hata kayıt numarası : "+inx;
+        } 
+        
+      }
+      return rtn;
+    }
+
+    private string AFQSql()
+    {
+      return "CREATE TABLE #AFQT (Q NVarChar(MAX), A NVarChar(MAX))"+System.Environment.NewLine+
+        ";WITH CTE(t1inx, t2inx, Sonuc) AS"+System.Environment.NewLine+
+        "("+System.Environment.NewLine+
+        "  Select t1.inx t1inx, t2.inx t2inx, t2.Sonuc from dbo.StrToTable(@AFQ, '¶') t1"+System.Environment.NewLine+
+        "  CROSS APPLY dbo.StrToTable(t1.Sonuc, '§') t2"+System.Environment.NewLine+
+        ")"+System.Environment.NewLine+
+        "insert into #AFQT"+System.Environment.NewLine+
+        "  Select (CASE WHEN t2inx=1 THEN SUBSTRING(Sonuc, 3, LEN(Sonuc)) ELSE '' END), (CASE WHEN t2inx=1 THEN (Select SUBSTRING(Sonuc, 2, LEN(Sonuc)) from CTE c2 where c1.t1inx=c2.t1inx and c2.t2inx=2) ELSE '' END)" + System.Environment.NewLine +
+        "  From CTE c1 Where t2inx=1" + System.Environment.NewLine;
     }
 
     // Remove, TAMAMEN TESTLERİN HIZLI UYGULANABİLMESİ İÇİN OLUŞTURULDU, SİLİNECEK
-    public void Remove(String @TelNo)
+    public void Remove(String @Email)
     {
       List<SqlParameter> Params = new List<SqlParameter>();
-      Params.Add(new SqlParameter("@TelNo", TelNo));
-      mfn.SelectToDS("Exec dbo.spr_Remove @TelNo", Params);
+      Params.Add(new SqlParameter("@Email", Email));
+      mfn.SelectToDS("Exec dbo.spr_Remove @Email", Params);
     }
 
     private void Main()

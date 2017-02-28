@@ -16,10 +16,10 @@ namespace WifiProvider.WifiService {
     public interface IService1 {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService1/GetSecurityCode", ReplyAction="http://tempuri.org/IService1/GetSecurityCodeResponse")]
-        string GetSecurityCode(string TelNoHash);
+        string GetSecurityCode(string EmailHash);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService1/GetSecurityCode", ReplyAction="http://tempuri.org/IService1/GetSecurityCodeResponse")]
-        System.Threading.Tasks.Task<string> GetSecurityCodeAsync(string TelNoHash);
+        System.Threading.Tasks.Task<string> GetSecurityCodeAsync(string EmailHash);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService1/Login", ReplyAction="http://tempuri.org/IService1/LoginResponse")]
         string Login(string Evidence);
@@ -40,16 +40,16 @@ namespace WifiProvider.WifiService {
         System.Threading.Tasks.Task<string> SetUsageAsync(string ClientUsageMsg, string ProviderUsageMsg, long ConnectionID);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService1/Register", ReplyAction="http://tempuri.org/IService1/RegisterResponse")]
-        string Register(string TelNo, string Pass, long Quota);
+        string Register(string Email, string Pass, string LangId, string AFQ);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService1/Register", ReplyAction="http://tempuri.org/IService1/RegisterResponse")]
-        System.Threading.Tasks.Task<string> RegisterAsync(string TelNo, string Pass, long Quota);
+        System.Threading.Tasks.Task<string> RegisterAsync(string Email, string Pass, string LangId, string AFQ);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService1/Remove", ReplyAction="http://tempuri.org/IService1/RemoveResponse")]
-        void Remove(string TelNo);
+        void Remove(string Email);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IService1/Remove", ReplyAction="http://tempuri.org/IService1/RemoveResponse")]
-        System.Threading.Tasks.Task RemoveAsync(string TelNo);
+        System.Threading.Tasks.Task RemoveAsync(string Email);
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -79,12 +79,12 @@ namespace WifiProvider.WifiService {
                 base(binding, remoteAddress) {
         }
         
-        public string GetSecurityCode(string TelNoHash) {
-            return base.Channel.GetSecurityCode(TelNoHash);
+        public string GetSecurityCode(string EmailHash) {
+            return base.Channel.GetSecurityCode(EmailHash);
         }
         
-        public System.Threading.Tasks.Task<string> GetSecurityCodeAsync(string TelNoHash) {
-            return base.Channel.GetSecurityCodeAsync(TelNoHash);
+        public System.Threading.Tasks.Task<string> GetSecurityCodeAsync(string EmailHash) {
+            return base.Channel.GetSecurityCodeAsync(EmailHash);
         }
         
         public string Login(string Evidence) {
@@ -111,20 +111,20 @@ namespace WifiProvider.WifiService {
             return base.Channel.SetUsageAsync(ClientUsageMsg, ProviderUsageMsg, ConnectionID);
         }
         
-        public string Register(string TelNo, string Pass, long Quota) {
-            return base.Channel.Register(TelNo, Pass, Quota);
+        public string Register(string Email, string Pass, string LangId, string AFQ) {
+            return base.Channel.Register(Email, Pass, LangId, AFQ);
         }
         
-        public System.Threading.Tasks.Task<string> RegisterAsync(string TelNo, string Pass, long Quota) {
-            return base.Channel.RegisterAsync(TelNo, Pass, Quota);
+        public System.Threading.Tasks.Task<string> RegisterAsync(string Email, string Pass, string LangId, string AFQ) {
+            return base.Channel.RegisterAsync(Email, Pass, LangId, AFQ);
         }
         
-        public void Remove(string TelNo) {
-            base.Channel.Remove(TelNo);
+        public void Remove(string Email) {
+            base.Channel.Remove(Email);
         }
         
-        public System.Threading.Tasks.Task RemoveAsync(string TelNo) {
-            return base.Channel.RemoveAsync(TelNo);
+        public System.Threading.Tasks.Task RemoveAsync(string Email) {
+            return base.Channel.RemoveAsync(Email);
         }
     }
 }
