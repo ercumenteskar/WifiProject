@@ -4,6 +4,8 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element minOccurs="0" name="EmailHash" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="AFQ" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="LangCode" nillable="true" type="xs:string" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -18,6 +20,8 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element minOccurs="0" name="Evidence" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="AFQ" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="LangCode" nillable="true" type="xs:string" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -33,6 +37,8 @@
       <xs:sequence>
         <xs:element minOccurs="0" name="ClientEvidence" nillable="true" type="xs:string" />
         <xs:element minOccurs="0" name="ProviderEvidence" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="AFQ" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="LangCode" nillable="true" type="xs:string" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -49,6 +55,8 @@
         <xs:element minOccurs="0" name="ClientUsageMsg" nillable="true" type="xs:string" />
         <xs:element minOccurs="0" name="ProviderUsageMsg" nillable="true" type="xs:string" />
         <xs:element minOccurs="0" name="ConnectionID" type="xs:long" />
+        <xs:element minOccurs="0" name="AFQ" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="LangCode" nillable="true" type="xs:string" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -64,8 +72,8 @@
       <xs:sequence>
         <xs:element minOccurs="0" name="Email" nillable="true" type="xs:string" />
         <xs:element minOccurs="0" name="Pass" nillable="true" type="xs:string" />
-        <xs:element minOccurs="0" name="LangId" nillable="true" type="xs:string" />
         <xs:element minOccurs="0" name="AFQ" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="LangCode" nillable="true" type="xs:string" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -86,6 +94,22 @@
   <xs:element name="RemoveResponse">
     <xs:complexType>
       <xs:sequence />
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SendResetPasswordCode">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="EmailHash" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="LangCode" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="AFQ" nillable="true" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SendResetPasswordCodeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="SendResetPasswordCodeResult" nillable="true" type="xs:string" />
+      </xs:sequence>
     </xs:complexType>
   </xs:element>
 </xs:schema>

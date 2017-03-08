@@ -1,0 +1,34 @@
+﻿1¶1¶%s1 already registered.
+1¶2¶User can not be found. Please check and try again.
+1¶3¶Hello, <a href="./ChangePassword2?RPC=%s1">click the link for change your password.</a>Thank You.
+1¶4¶Your reset password mail send succesfully. Please click link on that mail.
+1¶5¶Error occured. Error record number : %s1
+1¶6¶Please check your internet connection.
+1¶7¶Signup completed succesfully. You can sign in now.§OK
+1¶8¶Please enter a valid e-mail address.
+1¶9¶Please enter your password.
+1¶10¶Application must run as administrator.
+1¶11¶Client (%s1) disconnected. (%s2)
+1¶12¶Disconnected.
+1¶13¶Timeout
+1¶14¶Credit
+1¶15¶Password does not match the confirm password.
+1¶16¶Wifi not connected
+1¶17¶Wifi (%s1) not in system.
+2¶1¶%s1 adresi zaten kayıtlı.
+2¶2¶Kullanıcı bulunamadı. Lütfen kontrol edip tekrar deneyin.
+2¶3¶Merhaba, <a href="./ChangePassword2?RPC=%s1">Parolanızı sıfırlamak için bu linke tıklayın.</a>Teşekkürler.
+2¶4¶Parola sıfırlama mailiniz gönderildi. Lütfen gelen e-postadaki linki tıklayarak devam edin.
+2¶5¶Hata oluştu. Hata kayıt numarası : %s1
+2¶6¶Lütfen internet bağlantınızı kontrol edin.
+2¶7¶Kayıt başarılı. Giriş yapılacak.§OK
+2¶8¶Lütfen geçerli bir e-posta adresi girin.
+2¶9¶Lütfen parolanızı girin.
+2¶10¶Program yönetici yetkisi ile açılmalıdır.
+2¶11¶İstemcinin (%s1) bağlantısı kesildi. (%s2)
+2¶12¶Bağlantı kesildi.
+2¶13¶Zaman aşımı
+2¶14¶Kredi
+2¶15¶Parolalar aynı değil.
+2¶16¶Wifi bağlı değil
+2¶17¶Wifi (%s1) sistemde değil.

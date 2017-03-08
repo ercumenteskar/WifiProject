@@ -12,46 +12,22 @@ namespace WifiService
   public interface IService1
   {
     [OperationContract]
-    String GetSecurityCode(String EmailHash);
+    String GetSecurityCode(String EmailHash, String AFQ, String LangCode);
     [OperationContract]
-    String Login(String Evidence);
+    String Login(String Evidence, String AFQ, String LangCode);
     [OperationContract]
-    String ConnectUS(String ClientEvidence, String ProviderEvidence);
+    String ConnectUS(String ClientEvidence, String ProviderEvidence, String AFQ, String LangCode);
     [OperationContract]
-    String SetUsage(String ClientUsageMsg, String ProviderUsageMsg, long ConnectionID);
+    String SetUsage(String ClientUsageMsg, String ProviderUsageMsg, long ConnectionID, String AFQ, String LangCode);
     [OperationContract]
-    String Register(String @Email, String @Pass, String LangId, String @AFQ);
+    String Register(String Email, String Pass, String AFQ, String LangCode);
     [OperationContract]
     // Remove, TAMAMEN TESTLERİN HIZLI UYGULANABİLMESİ İÇİN OLUŞTURULDU, SİLİNECEK
     void Remove(String @Email);
-    //[OperationContract]
-    //[OperationContract]
-    //[OperationContract]
-    //[OperationContract]
+    [OperationContract]
+    String SendResetPasswordCode(String EmailHash, String LangCode, String AFQ);
 
 
   }
 
-  // Use a data contract as illustrated in the sample below to add composite types to service operations.
-  // You can add XSD files into the project. After building the project, you can directly use the data types defined there, with the namespace "WifiService.ContractType".
-  [DataContract]
-  public class CompositeType
-  {
-    bool boolValue = true;
-    string stringValue = "Hello ";
-
-    [DataMember]
-    public bool BoolValue
-    {
-      get { return boolValue; }
-      set { boolValue = value; }
-    }
-
-    [DataMember]
-    public string StringValue
-    {
-      get { return stringValue; }
-      set { stringValue = value; }
-    }
-  }
 }
