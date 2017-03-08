@@ -1,11 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiProviderConsole", "WifiConsole\WifiProviderConsole.csproj", "{4D1E0AEE-EB7F-4384-A76E-D4A477177A57}"
-	ProjectSection(ProjectDependencies) = postProject
-		{1668EA5D-0A75-46B0-BA5E-F8AF524CDDEB} = {1668EA5D-0A75-46B0-BA5E-F8AF524CDDEB}
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiWPFClient", "WifiWPFClient\WifiWPFClient.csproj", "{484F599B-CA38-4C00-AC68-2C2107D85179}"
 	ProjectSection(ProjectDependencies) = postProject
 		{1668EA5D-0A75-46B0-BA5E-F8AF524CDDEB} = {1668EA5D-0A75-46B0-BA5E-F8AF524CDDEB}
@@ -24,10 +19,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{4D1E0AEE-EB7F-4384-A76E-D4A477177A57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4D1E0AEE-EB7F-4384-A76E-D4A477177A57}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4D1E0AEE-EB7F-4384-A76E-D4A477177A57}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4D1E0AEE-EB7F-4384-A76E-D4A477177A57}.Release|Any CPU.Build.0 = Release|Any CPU
 		{484F599B-CA38-4C00-AC68-2C2107D85179}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{484F599B-CA38-4C00-AC68-2C2107D85179}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{484F599B-CA38-4C00-AC68-2C2107D85179}.Release|Any CPU.ActiveCfg = Release|Any CPU

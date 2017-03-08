@@ -15,4 +15,5 @@ C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.pdb
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.csprojResolveAssemblyReference.cache
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\ProviderMainWindow.baml
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\ProviderMainWindow.g.cs
+C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider_MarkupCompile.lref
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\bin\Debug\BouncyCastle.Crypto.dll

@@ -39,29 +39,27 @@ namespace WifiProvider
     //    private string Email = "5448302898";
     private String EmailHash { get { return GetTextBox(tb_Email).HashMD5(); } }
     //private String EmailHash = "";
-    private String Password = "e";
+    //private String Password = "e";
     private String SecurityCode = "";
     public WifiService.Service1Client WCF = new WifiService.Service1Client();
     public MyWebServer ws;
     //System.Windows.Threading.DispatcherTimer dispatcherTimer;
     int GetSetUsageInterval = 3000;
-//    private IntPtr hndl;
+    //    private IntPtr hndl;
     private bool wsStarted = false;
     //private delegate void Adff();
     //delegate void SimpleDelegate();
-    public string startIp = "192.168.137.1", MacMask = "", AdapterIP = "0.0.0.0"; //"0.0.0.0"
+    //public string startIp = "192.168.137.1", MacMask = "", AdapterIP = "0.0.0.0"; //"0.0.0.0"
     //public bool NetCardAlive = false;
     //private Thread dHCPThread = null;
     //private Socket MainSock;
     //private int packetCount = 0;
-    private List<String> SLKey = new List<String>();
-    private List<long> SLValue = new List<long>();
+    //private List<String> SLKey = new List<String>();
+    //private List<long> SLValue = new List<long>();
     private String WSPort = "80";
     private DnsServer dnsServer;
     private ICaptureDevice device;
-    private String source = "";
-    private String hotspot = "";
-    private String providerIp = "";
+    private static String providerIp = "";
     public event PropertyChangedEventHandler PropertyChanged;
     private void OnPropertyChanged(String property) { if (PropertyChanged != null) { PropertyChanged(this, new PropertyChangedEventArgs(property)); } }
     private long _quota = -1;
@@ -69,8 +67,9 @@ namespace WifiProvider
     public string QuotaStr { get { return (Quota / 1024).ToString("###,###,###,###,##0"); } }
     public string bt_ConnectContent { get { return Connected ? "Disconnect" : "Connect"; } }
     string langCode = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-    private bool _connected = false;
     public static IntPtr wdhndl = IntPtr.Zero;
+    private MyDictionary dict;
+    private bool _connected = false;
     public bool Connected
     {
       get { return _connected; }
@@ -94,7 +93,7 @@ namespace WifiProvider
     }
     public List<Client> clients = new List<Client>();
 
-    
+
     public class Client
     {
       public String Mac = "000000000000";
@@ -140,7 +139,7 @@ namespace WifiProvider
         //  return;
         if (this.WDHandle != 0)
           AllowMac();
-        IntPtr i = WinDivertMethods.WinDivertOpen("(ip.SrcAddr=" + Ip + " or ip.DstAddr=" + Ip + ") and (ip.SrcAddr!=192.168.137.1 and ip.DstAddr!=192.168.137.1)", WINDIVERT_LAYER.WINDIVERT_LAYER_NETWORK, 1, WinDivertConstants.WINDIVERT_FLAG_DROP);
+        IntPtr i = WinDivertMethods.WinDivertOpen("(ip.SrcAddr=" + Ip + " or ip.DstAddr=" + Ip + ") and (ip.SrcAddr!=" + providerIp + " and ip.DstAddr!=" + providerIp + ")", WINDIVERT_LAYER.WINDIVERT_LAYER_NETWORK, 1, WinDivertConstants.WINDIVERT_FLAG_DROP);
         if (Int32.Parse(i.ToString()) > 0)
           this.WDHandle = Int32.Parse(i.ToString());
       }
@@ -250,8 +249,10 @@ namespace WifiProvider
     }
     private String myEvidence(String Mesaj = "")
     {
-      SetSecurityCode();
-      return EmailHash + (SecurityCode + (EmailHash + Password).HashMD5() + Mesaj.HashMD5()).HashMD5() + Mesaj;
+      if (!SetSecurityCode())
+        return "";
+      else
+        return EmailHash + (SecurityCode + (EmailHash + GetPasswordBox(tb_Password)).HashMD5() + Mesaj.HashMD5()).HashMD5() + Mesaj;
     }
     public string addressToString(SocketAddress addr)
     {
@@ -289,105 +290,78 @@ namespace WifiProvider
 
     public void StartSystem()
     {
+      String source = "";
+      String hotspot = "";
       StopSystem();
       if (!Connected)
         return;
-      //List<NetworkInterface> nics = IcsManager.GetAllIPv4Interfaces();// new List<NetworkInterface>();
-      if (wdhndl != IntPtr.Zero) 
+      if (wdhndl != IntPtr.Zero)
         WinDivertMethods.WinDivertClose(wdhndl);
-      //wdhndl = WinDivertMethods.WinDivertOpen("( (ip.DstAddr<192.168.137.1 or ip.DstAddr>192.168.137.255)) ", WINDIVERT_LAYER.WINDIVERT_LAYER_NETWORK, 1, WinDivertConstants.WINDIVERT_FLAG_DROP);
-      NetworkInterface nicx = IcsManager.GetAllIPv4Interfaces().FirstOrDefault(nic => (nic.OperationalStatus == OperationalStatus.Up && nic.NetworkInterfaceType != NetworkInterfaceType.Tunnel && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback));
-      if (nicx != null)
-        source = nicx.Id;
-      else
+      List<NetworkInterface> nicx = new List<NetworkInterface>();
+      foreach (var nic in IcsManager.GetAllIPv4Interfaces())
+        if ((nic.OperationalStatus == OperationalStatus.Up && nic.NetworkInterfaceType != NetworkInterfaceType.Tunnel && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback))
+          nicx.Add(nic);
+      if (nicx.Count>1)
       {
-        MessageBox.Show("İnternet kaynağı bulunamadı. Lütfen kontrol edip programı tekrar çalıştırın.");
+        MessageBox.Show("Paylaşılabilecek birden fazla internet kaynağı bulundu. Lütfen kontrol edip programı tekrar deneyin.");
         Application.Current.Shutdown();
       }
-      /*
-      foreach (NetworkInterface nic in IcsManager.GetAllIPv4Interfaces())
-        if (nic.OperationalStatus == OperationalStatus.Up && nic.NetworkInterfaceType != NetworkInterfaceType.Tunnel && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback)
-          nics.Add(nic);
-      if (nics.Count > 1)
-      {
-        for (int i = 0; i < nics.Count; i++)
-          Add2Log(i.ToString() + "-) " + nics[i].Name + " " + nics[i].Id);
-        Add2Log("Select your internet source");
-        source = nics[Int32.Parse(Console.ReadLine())].Id;
-      }
+      else if (nicx.Count == 1)
+        source = nicx[0].Id;
       else
-        source = nics[0].Id;
-      */
-      //      String source = nics[1].Id;
-      //Add2Log("Select your hotspot");
-      //      String hotspot = nics[Int32.Parse(Console.ReadLine())].Id;
-      //      String hotspot = nics[0].Id;
-
-      /*
-      Add2Log(Netsh("wlan set hostednetwork mode=allow ssid=wifix")); //  key=ercierci
-      Add2Log(Netsh("wlan start hostednetwork"));
-      */
+      {
+        MessageBox.Show("İnternet kaynağı bulunamadı. Lütfen kontrol edip programı tekrar deneyin.");
+        Application.Current.Shutdown();
+      }
       Netsh("wlan set hostednetwork mode=allow ssid=wifix key=erci1234"); //  key=ercierci
-      //Netsh("wlan start hostednetwork");
-      //Add2Log("HotSpot Opened");
-      //Thread.Sleep(100);
-      nicx = IcsManager.GetAllIPv4Interfaces().FirstOrDefault(nic => (nic.Id != source && nic.NetworkInterfaceType != NetworkInterfaceType.Tunnel && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback));
-      if (nicx != null)
-        hotspot = nicx.Id;
+      Add2Log("Hotspot Created");
+      nicx.Clear();
+      foreach (var nic in IcsManager.GetAllIPv4Interfaces())
+        if ((nic.Description.Contains("Virtual") && nic.Id != source && nic.NetworkInterfaceType != NetworkInterfaceType.Tunnel && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback))
+          nicx.Add(nic);
+      if (nicx.Count > 1)
+      {
+        MessageBox.Show("Barındırılmış Ağ seçilemedi. Bilgisayarınızda birden fazla sanal wifi sürücüsü görünüyor.");
+        Application.Current.Shutdown();
+      }
+      else if (nicx.Count == 1)
+        hotspot = nicx[0].Id;
       else
       {
         MessageBox.Show("Paylaşım için gerekli sürücüler bulunamadı. Lütfen kontrol edip programı tekrar çalıştırın.");
         Application.Current.Shutdown();
       }
-      /*
-      nics.Clear();
-      foreach (NetworkInterface nic in IcsManager.GetAllIPv4Interfaces())
-        if (nic.NetworkInterfaceType != NetworkInterfaceType.Tunnel && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback && nic.Id != source) // nic.OperationalStatus == OperationalStatus.Up && 
-          nics.Add(nic);
-      */
-      //if (nics.Count > 1) // TODO Aslında 0 ı değil kullanıcının istediğini seçmem lazım
-      //{
-      //  for (int i = 0; i < nics.Count; i++)
-      //    Add2Log(i.ToString() + "-) {0} {1}", nics[i].Name, nics[i].Id);
-      //  Add2Log("Select your hotspot");
-      //  hotspot = nics[Int32.Parse(Console.ReadLine())].Id;
-      //}
-      //else
-      //hotspot = nics[0].Id;
-      ///*
-      //DisableICS();
-      //EnableICS(source, hotspot, true);
-      //Add2Log("Internet Connection Sharing Enabled");
+      EnableICS(source, hotspot, true);
+      Add2Log("Internet Connection Sharing Enabled");
       Netsh("wlan start hostednetwork");
       Add2Log("HotSpot Opened");
+
       Thread _thrGetSetUsage = new Thread(new ThreadStart(GetSetUsage));
       _thrGetSetUsage.IsBackground = true;
       //_thrGetSetUsage.Start();
       Add2Log("GetSetUsage thread started!");
+
       #region DNS SERVER
-      //dnsServer = new DnsServer(IPAddress.Any, 10, 10);
-      //dnsServer.QueryReceived += OnQueryReceived;
-      //      dnsServer.ClientConnected += OnClientConnected;
-      //dnsServer.Start();
+      dnsServer = new DnsServer(IPAddress.Any, 10, 10);
+      dnsServer.QueryReceived += OnQueryReceived;
+      //dnsServer.ClientConnected += OnClientConnected;
+      dnsServer.Start();
       Add2Log("DNS Server running");
       #endregion
-      EnableICS(source, hotspot, true);
-      //      var gp = IcsManager.FindConnectionByIdOrName(hotspot);
-      //*/
-      //if (NFAPI.nf_init("netfilter2", m_eh) != 0)
-      //{
-      //  Console.Out.WriteLine("Failed to connect to driver");
-      //  return;
-      //}
       #region Capture Device // start olmadan önce capture başlarsa capture çalışmıyor...
       device = CaptureDeviceList.Instance.FirstOrDefault(x => x.Name.Contains(hotspot));// devices[devices.Count - 1];
       var v = ((SharpPcap.WinPcap.WinPcapDevice)device).Addresses.First(x => x.Addr.ipAddress.ToString().Contains("."));
       if (v != null)
-        providerIp = v.Addr.ipAddress.ToString();
-      if (!providerIp.Contains("."))
-        providerIp = GetValue(device.ToString().Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries)[8], "Addr:      ");
-      if (!providerIp.Contains("."))
-        providerIp = "192.168.137.1";
+        providerIp = v.Addr.ipAddress.ToString(); // Anlamadığım bir sebepten dolayı bazen 0.0.0.0 geliyor. Ya da 192.168.0.1 // Ostoto kurup kaldırınca böyle oldu...
+      else
+      {
+        MessageBox.Show("ProciderIp alınamadı");
+        Application.Current.Shutdown();
+      }
+      //if (!providerIp.Contains(".")) 
+      //  providerIp = GetValue(device.ToString().Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries)[8], "Addr:      ");
+      //if (!providerIp.Contains("."))
+      //  providerIp = "192.168.137.1";
       device.OnPacketArrival += new SharpPcap.PacketArrivalEventHandler(device_OnPacketArrival);
       device.Open(DeviceMode.Normal, 1000); //DeviceMode.Promiscuous
       device.StartCapture();
@@ -411,8 +385,8 @@ namespace WifiProvider
     {
       Ping pingSender = new Ping();
       //IPAddress address = IPAddress.Loopback;
-      PingReply reply = pingSender.Send("192.168.137.1", 10);
-      while (reply.Status != IPStatus.Success) reply = pingSender.Send("192.168.137.1", 10);
+      PingReply reply = pingSender.Send(providerIp, 10);
+      while (reply.Status != IPStatus.Success) reply = pingSender.Send(providerIp, 10);
       ws = new MyWebServer(SendResponse, "http://" + providerIp + ":" + WSPort + "/");
       ws.Run();
       wsStarted = true;
@@ -422,14 +396,14 @@ namespace WifiProvider
     private void StopSystem()
     {
       Netsh("wlan stop hostednetwork");
+      DisableICS();
       Netsh("wlan set hostednetwork mode=disallow"); //  key=ercierci
-      Netsh("wlan set hostednetwork mode=allow ssid=wifix key=erci1234"); //  key=ercierci
+//      Netsh("wlan set hostednetwork mode=allow ssid=wifix key=erci1234"); //  key=ercierci
       if ((device != null) && (device.Started))
       {
         device.StopCapture();
         device.Close();
       }
-      //DisableICS();
       if ((ws != null) && (wsStarted))
       {
         ws.Stop();
@@ -442,11 +416,6 @@ namespace WifiProvider
       Add2Log("Sistem kapatıldı.");
     }
 
-    private String GetUrlParam(String Url, String Param)
-    {
-      NameValueCollection nvc = HttpUtility.ParseQueryString(Url.Substring(Url.IndexOf("?")));
-      return nvc[Param];
-    }
 
     private string GetHostName(string ipAddress)
     {
@@ -536,6 +505,17 @@ namespace WifiProvider
 
     public string SendResponse(HttpListenerRequest request)
     {
+      String url = request.Url.ToString();
+      String command = "";
+      String _temp = "";
+      if ((url.Contains("/")) && (url.Contains("?")) && (url.IndexOf("/") < url.IndexOf("?")))
+        command = url.ReverseString().OrtasiniGetir("?", "/").ReverseString();
+      else if (url.Contains("/"))
+        command = url.Split('/').Last();
+      if (command == "ping")
+      {
+        return "pong";
+      }
       string RemoteIp = request.RemoteEndPoint.Address.ToString();
       ///* // Mac a göre bulurken hem cmd işin içine giriyor (içime sinmedi) hem de kendi makinamdan test edemiyordum...
       string reqmac = "";
@@ -550,22 +530,16 @@ namespace WifiProvider
       if (_client == null)
         //TODOTESTreturn "Tanımlanmamış istemci (Undefined client)";
         if (clients.Count() > 0) _client = clients[0]; else return "";
-      String url = request.Url.ToString();
-      String command = "";
-      String _temp = "";
-      if ((url.Contains("/")) && (url.Contains("?")) && (url.IndexOf("/") < url.IndexOf("?")))
-        command = url.ReverseString().OrtasiniGetir("?", "/").ReverseString();
-      //else return "";
       if (command == "Remove")
       {
-        String Email = GetUrlParam(url, "Email");
+        String Email = url.GetUrlParam("Email");
         WCF.Remove(Email);
         return "<a href='Register?Email=5448302899'>Register</a>";
       }
       else if (command == "Register")
       {
         String result = "";
-        _temp = WCF.Register(GetUrlParam(url, "Email"), GetUrlParam(url, "PW"), GetUrlParam(url, "LangCode"), result);
+        _temp = WCF.Register(url.GetUrlParam("Email"), url.GetUrlParam("Pass"), url.GetUrlParam("LangCode"), result);
         if (_temp.Length == 32)
         {
           _client.SecurityCode = _temp;
@@ -573,51 +547,52 @@ namespace WifiProvider
           // "<a href='GetSecurityCode?EmailHash=5CAA8CD9E281E9A815AD88C79DB734FF'>GetSecurityCode</a>";
           //return "<a href='Login?Evidence=" + _client.EmailHash + (qry + (EmailHash + _client.Password).HashMD5() + ("").HashMD5()).HashMD5() + "'>Login</a>";//qry;
         }
-        else return "error:" + _temp;
+        else return _temp;
       }
       else if (command == "GetSecurityCode")
       {
-        String _EmailHash = GetUrlParam(url, "EmailHash");
-        _temp = WCF.GetSecurityCode(_EmailHash);
+        String _EmailHash = url.GetUrlParam("EmailHash");
+        _temp = WCF.GetSecurityCode(_EmailHash, url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
         if (_temp.Length == 32)
         {
           _client.EmailHash = _EmailHash;
           _client.SecurityCode = _temp;
-          if (GetUrlParam(url, "testercument") == "1")
+          if (url.GetUrlParam("testercument") == "1")
             return "<a href='Login?Evidence=" + _client.EmailHash + (_client.SecurityCode + (_EmailHash + _client.Password).HashMD5() + ("").HashMD5()).HashMD5() + "&testercument=1'>Login</a>";
           else
             return _temp;
         }
-        else return "error:" + _temp;
+        else return _temp;
       }
       else if (command == "Login")
       {
-        String Evidence = GetUrlParam(url, "Evidence");
-        _temp = WCF.Login(Evidence);
+        String Evidence = url.GetUrlParam("Evidence");
+        _temp = WCF.Login(Evidence, url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
         if (_temp.Length >= 34)
         {
           _client.Quota = long.Parse(_temp.Substring(33));
           _client.SecurityCode = _temp.Substring(0, 32);
-          if (GetUrlParam(url, "testercument") == "1")
+          if (url.GetUrlParam("testercument") == "1")
             return "<a href='ConnectUS?ClientEvidence=" + _client.EmailHash + (_client.SecurityCode + (_client.EmailHash + _client.Password).HashMD5() + ("").HashMD5()).HashMD5() + "&testercument=1'>ConnectUS</a>";
           else
             return _temp;
         }
-        else return "error:" + _temp;
+        else return _temp;
       }
       else if (command == "ConnectUS")
       {
-        String ClientEvidence = GetUrlParam(url, "ClientEvidence");
+        if (_client.Quota == 0) return "¶E:"+dict.GetMessage(18);
+        String ClientEvidence = url.GetUrlParam("ClientEvidence");
         _temp = myEvidence();
-        _temp = WCF.ConnectUS(ClientEvidence, _temp);
+        _temp = WCF.ConnectUS(ClientEvidence, _temp, url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
         if (_temp.Length >= 67)
         {
           _client.SecurityCode = _temp.Substring(0, 32);
-          SecurityCode = _temp.Substring(33, 32);
-          _client.ConnectionID = _temp.Substring(66);
+          SecurityCode = _temp.Substring(65, 32);
+          _client.ConnectionID = _temp.Substring(130);
           _client.Usage = 0;
           Add2Log("BAĞLANAN VAR. CONNECTION ID : " + _client.ConnectionID.ToString());
-          _client.isTest = (GetUrlParam(url, "testercument") == "1");
+          _client.isTest = (url.GetUrlParam("testercument") == "1");
           _client.Online = true;
           if (_client.isTest)
             return "BAĞLANTI SAĞLANDI";//"<a href='WhatsUp?EmailHash=" + _client.EmailHash + "'&testercument=1>WhatsUp</a>";
@@ -625,15 +600,15 @@ namespace WifiProvider
             return _client.SecurityCode + ";" + _client.ConnectionID.ToString(); // "<a href='WhatsUp?EmailHash=" + _client.EmailHash + "'>WhatsUp</a>";
           //          return qry.Substring(0, 32) + ";" + qry.Substring(66); // Client SecurityCode+";"+ConnectionID
         }
-        else return "error:" + _temp;
+        else return _temp;
       }
       else if (command == "GetUsage")
       {
-        String _tnh = GetUrlParam(url, "EmailHash");
-        String _cid = GetUrlParam(url, "ConnectionID");
-        if (_client.ConnectionID == "")
-          return "error:No Connection on " + _client.Ip + " (" + _client.Mac + ")";
-        else if ((_client.EmailHash.Equals(_tnh)) && (_client.ConnectionID.ToString().Equals(_cid)))
+        String _tnh = url.GetUrlParam("EmailHash");
+        String _cid = url.GetUrlParam("ConnectionID");
+        //if (_client.ConnectionID == "")
+        //  return "error:No Connection on " + _client.Ip + " (" + _client.Mac + ")"; else 
+        if ((_client.EmailHash.Equals(_tnh)) && (_client.ConnectionID.ToString().Equals(_cid)) && (_client.ConnectionID.ToString()!=""))
         {
           //return "<a href='SetUsage?Message=" + _client.EmailHash + (_client.SecurityCode + (EmailHash + _client.Password).HashMD5() + (usg.ToString()).HashMD5()).HashMD5() + usg.ToString() + "'>SetUsage</a>";
           Add2Log("KULLANIM BILGISI GONDERILDI. KULLANIM : " + _client.Usage.ToString() + " CONNECTION ID : " + _client.ConnectionID.ToString());
@@ -645,17 +620,17 @@ namespace WifiProvider
           else
             return _client.Usage.ToString() + ";" + _client.ConnectionID.ToString();
         }
-        else return "error:" + _client.EmailHash + "<>" + _tnh + " OR " + _client.ConnectionID.ToString() + "<>" + _cid;
+        else return "¶E:" + _client.EmailHash + "<>" + _tnh + " || " + _client.ConnectionID.ToString() + "<>" + _cid;
       }
       else if (command == "SetUsage")
       {
-        _temp = GetUrlParam(url, "Message");
+        _temp = url.GetUrlParam("Message");
         String EmailHash = _temp.Substring(0, 32);
         if (_client.EmailHash == EmailHash)
         {
           String amount = _temp.Substring(64);
-          amount = WCF.SetUsage(_temp, myEvidence(amount), long.Parse(_client.ConnectionID));
-          if (!amount.StartsWith("error:"))
+          amount = WCF.SetUsage(_temp, myEvidence(amount), long.Parse(_client.ConnectionID), url.GetUrlParam("AFQ"), langCode);
+          if (!amount.StartsWith("¶"))
           {
             _client.LastQuery = DateTime.Now;
             _client.SecurityCode = amount.Substring(0, 32);
@@ -668,13 +643,13 @@ namespace WifiProvider
           }
           else return amount;
         }
-        else return "error:" + _client.EmailHash + "<>" + EmailHash;
+        else return "¶E:" + _client.EmailHash + "<>" + EmailHash;
       }
       else if (command == "Disconnect")
       {
         _client.ConnectionID = "";
-        Add2Log("BAĞLANTI SONLANDIRILDI. CONNECTION ID : " + GetUrlParam(url, "ConnectionID"));
-        return "BAĞLANTI SONLANDIRILDI. CONNECTION ID : " + GetUrlParam(url, "ConnectionID");
+        Add2Log("BAĞLANTI SONLANDIRILDI. CONNECTION ID : " + url.GetUrlParam("ConnectionID"));
+        return "BAĞLANTI SONLANDIRILDI. CONNECTION ID : " + url.GetUrlParam("ConnectionID");
       }
       else
         return "<a href='GetSecurityCode?EmailHash=5CAA8CD9E281E9A815AD88C79DB734FF&testercument=1'>GetSecurityCode</a>";
@@ -690,7 +665,6 @@ namespace WifiProvider
     void device_OnPacketArrival(object sender, CaptureEventArgs e)
     {
       String devmac = device.MacAddress.ToString();
-      //String tmp = device.LinkType.ToString();
       var packet = PacketDotNet.Packet.ParsePacket(e.Packet.LinkLayerType, e.Packet.Data);
       if (packet is PacketDotNet.EthernetPacket)
       {
@@ -705,21 +679,7 @@ namespace WifiProvider
           d_ip = ip.DestinationAddress.ToString();
           s_ip = ip.SourceAddress.ToString();
         }
-        if ((d_mac == devmac) || (d_ip == providerIp) || (!d_ip.StartsWith(providerIp.Substring(0, providerIp.LastIndexOf('.')))) || (d_mac == "") || (d_mac.Replace(d_mac.Substring(0, 1), "") == "")) return;
-        //if (d_mac == "96659C170A34") d_mac = "888888888887";
-        //if (d_ip == "192.168.137.1") d_ip = "192.168.137.100";
-        //if (
-        //     (devmac != s_mac)
-        //  //|| (s_ip != providerIp) || (!s_ip.Contains('.')) // mesela youtube dan video izlerken kaynak dış ip adresi oluyor...
-        //  //|| (s_ip.Substring(0, s_ip.LastIndexOf('.')) != d_ip.Substring(0, d_ip.LastIndexOf('.'))) // mesela youtube dan video izlerken kaynak dış ip adresi oluyor...
-        //  || (d_ip == providerIp) || (d_ip == "") || (!d_ip.Contains('.'))
-        //  || (d_mac == "") || (d_mac.Replace(d_mac.Substring(0, 1), "") == "") || (d_ip == "255.255.255.255")
-        //  ) return;
-        //string sss = s_ip.Substring(0, s_ip.LastIndexOf('.'));
-        //packet.Bytes.Length
-        //long PackSize = e.Packet.Data.Length;//büyük%10 civarı
-        //long PackSize = packet.Bytes.Length; //büyük%10 civarı
-        //long PackSize = packet.Bytes.Length - packet.Header.Length; //büyük%10 civarı
+        if ((d_mac == devmac) || (d_ip == providerIp) || (!d_ip.StartsWith(providerIp.Substring(0, providerIp.LastIndexOf('.')))) || (d_mac == "")) return;
         long PackSize = eth.Bytes.Length - eth.Header.Length; //büyük%10 civarı
         /*
         var ipv4 = (PacketDotNet.IPv4Packet)packet.Extract(typeof(PacketDotNet.IPv4Packet));
@@ -738,42 +698,18 @@ namespace WifiProvider
         }
         */
         Client cl = clients.Find(x => x.Mac == d_mac);
-        if (
-            (cl == null)
-          //&& (s_ip == providerIp) && (s_ip.Contains('.')) // mesela youtube dan video izlerken kaynak dış ip adresi oluyor...
-          //&& (s_ip.Substring(0, s_ip.LastIndexOf('.')) == d_ip.Substring(0, d_ip.LastIndexOf('.'))) // mesela youtube dan video izlerken kaynak dış ip adresi oluyor...
-            && (
-            (
-              //(devmac == s_mac) && (d_ip != providerIp) && (d_ip != "") && 
-              //(d_ip.Contains('.'))
-              //&& (d_mac != "") 
-              true//&& (d_mac.Replace(d_mac.Substring(0, 1), "") != "") && (d_ip != "255.255.255.255")
-              ) //|| (devmac == "96659C170A34")
-            )
-          )
+        if (cl == null)
         {
-          //if ((clients.Find(x => x.Mac == devmac) == null) && (devmac == "96659C170A34"))
-          //{
-          //  cl = new Client(devmac, "192.168.137.1");
-          //  clients.Add(cl);
-          //  Add2Log(cl.Mac + "(" + cl.Ip + ") Added");
-          //}
           cl = new Client(d_mac, d_ip);
           clients.Add(cl);
           Add2Log(cl.Mac + "(" + cl.Ip + ") Added (" + GetHostName(cl.Ip) + ")");
           SetTextBox(tb_ip, cl.Ip);
         }
         if (cl == null) return;
-        //else if ((cl.Ip == "") && (d_ip != ""))// Bu mac adresi için 2. sefer ise ve öncekinde ip adresi yoktuysa
-        //{
-        //  cl.Ip = d_ip; // ilk gelişinde ip istemek için geliyor, haliyle kayıtlarda ip adresi yok. 
-        //  if (cl.Ip.Contains('.'))
-        //    Add2Log(cl.Mac + "(" + cl.Ip + ") Added");
-        //} else
-        if ((cl.Ip != d_ip) && (d_ip != "") && (d_ip.StartsWith("192.168.137."))) // Bu mac adresi için önceden yapılan kayıttan sonra ip adresi değişti ise
+        if ((cl.Ip != d_ip) && (d_ip.StartsWith(providerIp.Substring(0, providerIp.LastIndexOf('.')) + "."))) // Bu mac adresi için önceden yapılan kayıttan sonra ip adresi değişti ise
         {
           cl.Online = false;
-          clients.Remove(cl);
+          //clients.Remove(cl);
           return;
         }
         if (cl.Online)
@@ -783,8 +719,8 @@ namespace WifiProvider
           if (cl.Usage >= cl.Quota)
           {
             cl.Online = false;
-            clients.Remove(cl);
-            Console.WriteLine(cl.Mac + " kotasını bitirdiği için bağlantısı kesildi. ");
+            //clients.Remove(cl);
+            Add2Log(dict.GetMessage(11, cl.Mac + "¶" + dict.GetMessage(14)));
             return;
           }
           //Add2Log(cl.Mac + " : " + (cl.Usage / 1024).ToString("###,###,##0"));
@@ -808,7 +744,7 @@ namespace WifiProvider
         response.AdditionalRecords.AddRange(upstreamResponse.AdditionalRecords);
         response.ReturnCode = ReturnCode.NoError;
         String ipa = e.RemoteEndpoint.Address.ToString();
-        if ((ipa==providerIp) || (yetkili(clients.Find(x => x.Ip == ipa))))
+        if ((ipa == providerIp) || (yetkili(clients.Find(x => x.Ip == ipa))))
         {
           response.AnswerRecords.AddRange(upstreamResponse.AnswerRecords
                   .Where(w => !(w is ARecord))
@@ -828,7 +764,7 @@ namespace WifiProvider
                       upstreamResponse.AnswerRecords
                           .OfType<ARecord>()
             //                          .Select(a => new ARecord(a.Name, a.TimeToLive, IPAddress.Parse("192.168.137.1"))) // some local ip address
-                          .Select(a => new ARecord(a.Name, 1, IPAddress.Parse("192.168.137.1"))) // some local ip address
+                          .Select(a => new ARecord(a.Name, 1, IPAddress.Parse(providerIp))) // some local ip address
                   )
           );
         }
@@ -842,16 +778,14 @@ namespace WifiProvider
       Connected = false;
     }
 
-    public static bool IsAdministrator()
-    {
-      return (new WindowsPrincipal(WindowsIdentity.GetCurrent())).IsInRole(WindowsBuiltInRole.Administrator);
-    }    
-
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
-      if (!IsAdministrator()) 
+      String resource_data = Properties.Resources.Dict;
+      String[] rows = resource_data.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+      dict = new MyDictionary(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, rows);
+      if (!mfn.IsAdministrator())
       {
-        MessageBox.Show("Program yönetici yetkisi ile açılmalıdır.");
+        MessageBox.Show(dict.GetMessage(10));
         Application.Current.Shutdown();
       }
       this.DataContext = this;
@@ -869,9 +803,19 @@ namespace WifiProvider
         if ((tb_Email.Text != "") && (tb_Password.Password != ""))
           bt_Connect.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         else if (tb_Email.Text != "")
-          tb_Password.Focus();
+          Dispatcher.BeginInvoke(
+            DispatcherPriority.ContextIdle,
+            new Action(delegate()
+            {
+              tb_Password.Focus();
+            }));
         else if (tb_Password.Password != "")
-          tb_Email.Focus();
+          Dispatcher.BeginInvoke(
+            DispatcherPriority.ContextIdle,
+            new Action(delegate()
+            {
+              tb_Email.Focus();
+            }));
       }
     }
 
@@ -911,7 +855,6 @@ namespace WifiProvider
         (ThreadStart)delegate { result = tb.Password; });
       return result;
     }
-
     private void SetTextBox(TextBox tb, string str)
     {
       tb.Dispatcher.Invoke(
@@ -935,22 +878,6 @@ namespace WifiProvider
     {
       tb.Password = str;
       Thread.Sleep(100);
-    }
-    private String GetWebString(String Url)
-    {
-      WebClient wc = new WebClient();
-      String result = "";
-      try
-      {
-        result = wc.DownloadString(Url);
-      }
-      catch (Exception)
-      {
-        result = "";
-        //throw;
-      }
-      wc.Dispose();
-      return result;
     }
 
     private bool CheckResult(ref string result)
@@ -980,8 +907,8 @@ namespace WifiProvider
             bool cevaplimi = sl[i].Substring(sl[i].IndexOf("§") + 1).StartsWith("-");
             MessageBoxButton mbb = sl[i].Substring(sl[i].IndexOf("§") + 1) == "OK" ? MessageBoxButton.OK : sl[i].Substring(sl[i].IndexOf("§") + 1) == "OKCancel" ? MessageBoxButton.OKCancel : sl[i].Substring(sl[i].IndexOf("§") + 1) == "YesNo" ? MessageBoxButton.YesNo : sl[i].Substring(sl[i].IndexOf("§") + 1) == "YesNoCancel" ? MessageBoxButton.YesNoCancel : MessageBoxButton.OK;
             MessageBoxResult mbr = MessageBoxResult.None;
-            while (mbr==MessageBoxResult.None)
-              mbr = cevaplimi ? 
+            while (mbr == MessageBoxResult.None)
+              mbr = cevaplimi ?
                  (
                     sl[i].Substring(sl[i].IndexOf("§") + 1).Substring(1) == MessageBoxResult.Cancel.ToString() ? MessageBoxResult.Cancel
                   : sl[i].Substring(sl[i].IndexOf("§") + 1).Substring(1) == MessageBoxResult.No.ToString() ? MessageBoxResult.No
@@ -990,7 +917,7 @@ namespace WifiProvider
                   : MessageBoxResult.None
                 )
                 : MessageBox.Show(sl[i].OrtasiniGetir(":", "§"), "", mbb, MessageBoxImage.Question);
-            result = result + "¶Q:" + sl[i].OrtasiniGetir(":", "§")+"§-"+mbr.ToString(); // (ör: soru1§cevap1¶soru2§cevap2)
+            result = result + "¶Q:" + sl[i].OrtasiniGetir(":", "§") + "§-" + mbr.ToString(); // (ör: soru1§cevap1¶soru2§cevap2)
             rtn = rtn || !cevaplimi;
           }
           else if (sl[i].StartsWith("E:")) // Error
@@ -1002,38 +929,49 @@ namespace WifiProvider
         }
       }
       //else rtn = false;
-      return rtn;      
+      return rtn;
     }
 
-    public static T Runner<T>(Func<T> funcToRun)
+    public String WSRunner(String url)
     {
-      T rtn = funcToRun();
-      String str = (String)(object)rtn.ToString();
-      if (str == "")
-        return (T)(object)"¶E:Bağlantı sağlanamadı.";
-      else
-        return rtn;
+      string AFQ = null;
+      while (CheckResult(ref AFQ))
+      {
+        if (CheckForInternetConnection())
+        {
+          switch (url.GetUrlParam("."))
+          {
+            case "Register": AFQ = WCF.Register(url.GetUrlParam("Email"), url.GetUrlParam("Pass"), AFQ, langCode); break;
+            case "Remove": WCF.Remove(url.GetUrlParam("Email")); AFQ = ""; break;
+            case "GetSecurityCode": AFQ = WCF.GetSecurityCode(url.GetUrlParam("EmailHash"), AFQ, langCode); break;
+            case "Login": AFQ = WCF.Login(url.GetUrlParam("Evidence"), AFQ, langCode); break;
+            case "SendResetPasswordCode": AFQ = WCF.SendResetPasswordCode(url.GetUrlParam("EmailHash"), AFQ, langCode); break;
+          }
+        }
+        else // Please check your internet connection.
+          AFQ = "¶E:" + dict.GetMessage(6);
+      }
+      return AFQ;
     }
 
     private void bt_Register_Click(object sender, RoutedEventArgs e)
     {
       string result = null;
-      while (CheckResult(ref result))
-      {
-        if (CheckForInternetConnection())
-          result = Runner(() => WCF.Register(GetTextBox(tb_RegisterEmail), GetPasswordBox(tb_RegisterPassword1), langCode, result));
-        else
-          result = "¶E:Lütfen internet bağlantınızı kontrol edin.";
-      }
+      if (!GetTextBox(tb_RegisterEmail).isValidEmail())
+        MessageBox.Show(dict.GetMessage(8));
+      else if (GetPasswordBox(tb_RegisterPassword1) == "")
+        MessageBox.Show(dict.GetMessage(9));
+      else if (GetPasswordBox(tb_RegisterPassword1) != GetPasswordBox(tb_RegisterPassword2))
+        MessageBox.Show(dict.GetMessage(15));
+      else
+        result = WSRunner("/Register?Email=" + GetTextBox(tb_RegisterEmail) + "&Pass=" + GetPasswordBox(tb_RegisterPassword1));
       if (result == null) return;
-      result = "¶Q:Kayıt başarılı. Giriş yapılacak.§OK";
-      while (CheckResult(ref result))
-      {
-        tc_RegisterLogin.SelectedIndex = 0;
-        SetTextBox(tb_Email, GetTextBox(tb_RegisterEmail));
-        SetPasswordBox(tb_Password, GetPasswordBox(tb_RegisterPassword1));
-        bt_Connect.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-      }
+      if (CheckResult(ref result)) return;
+      MessageBox.Show(dict.GetMessage(7));
+      tc_RegisterLogin.SelectedIndex = 0;
+      SetTextBox(tb_Email, GetTextBox(tb_RegisterEmail));
+      SetPasswordBox(tb_Password, GetPasswordBox(tb_RegisterPassword1));
+      bt_Connect.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
     }
 
     private void GetSetUsage()
@@ -1046,49 +984,35 @@ namespace WifiProvider
           if ((item.Online) && ((DateTime.Now - item.LastQuery).TotalMilliseconds > GetSetUsageInterval * 2))
           {
             item.Online = false;
-            Add2Log(item.Mac + " adresli cihaz " + (GetSetUsageInterval / 1000 * 2).ToString() + " saniyedir yanıt vermediği için bağlantısı kapatıldı.");
+            Add2Log(dict.GetMessage(11, item.Mac + "¶" + dict.GetMessage(13))); // + (GetSetUsageInterval / 1000 * 2).ToString() + " saniyedir yanıt vermediği için bağlantısı kapatıldı.");
           }
         }
         Thread.Sleep(GetSetUsageInterval);
       }
     }
 
-
-    private void SetSecurityCode()
+    private bool SetSecurityCode()
     {
-      SecurityCode = WCF.GetSecurityCode(GetTextBox(tb_Email).HashMD5());
+      SecurityCode = WSRunner("/GetSecurityCode?EmailHash=" + GetTextBox(tb_Email).HashMD5());
+      if (SecurityCode == null) return false;
+      return !CheckResult(ref SecurityCode);
     }
 
     private void Login()
     {
       Quota = 0;
-      SetSecurityCode();
-      if (SecurityCode.StartsWith("error:"))
-      {
-        Add2Log(SecurityCode.Substring(6, SecurityCode.Length));
-        return;
-      }
-      else if (SecurityCode.Length != 32)
-      {
-        Add2Log("Hata: Güvenlik kodu dönmedi. Dönen değer:" + SecurityCode);
-        return;
-      };
-      Add2Log("SecurityCode alındı : " + SecurityCode);
-      String _tmp = WCF.Login(GetTextBox(tb_Email).HashMD5() + (SecurityCode + (GetTextBox(tb_Email).HashMD5() + Password).HashMD5() + ("").HashMD5()).HashMD5());
+      if (!SetSecurityCode()) return;
+      Add2Log("SecurityCode : " + SecurityCode);
+      String _tmp = WSRunner("/Login?Evidence=" + (GetTextBox(tb_Email).HashMD5() + (SecurityCode + (GetTextBox(tb_Email).HashMD5() + GetPasswordBox(tb_Password)).HashMD5() + ("").HashMD5()).HashMD5()));
+      //      String _tmp = Runner(() => WCF.Login(GetTextBox(tb_Email).HashMD5() + (SecurityCode + (GetTextBox(tb_Email).HashMD5() + Password).HashMD5() + ("").HashMD5()).HashMD5(), langCode, AFQ));
+      if (_tmp == null) return;
+      if (CheckResult(ref _tmp)) return;
       if ((_tmp.Length > 33) && (_tmp.Substring(32, 1) == ";"))
       {
         Quota = long.Parse(_tmp.Substring(33));
         SecurityCode = _tmp.Substring(0, 32);
-        //SetLabel(l_Quota, QuotaStr);
         Connected = true;
         RememberAction();
-      }
-      else
-      {
-        SecurityCode = "";
-        //l_Quota.Text = QuotaStr;
-        Add2Log("Hata: Giriş yapılamadı. " + _tmp);
-        return;
       }
     }
 
@@ -1112,13 +1036,16 @@ namespace WifiProvider
     private void bt_Connect_Click(object sender, RoutedEventArgs e)
     {
       if (Connected)
-      {
         Connected = false;
-        return;
+      else
+      {
+        if (!GetTextBox(tb_Email).isValidEmail())
+          MessageBox.Show(dict.GetMessage(8));
+        else if (GetPasswordBox(tb_Password) == "")
+          MessageBox.Show(dict.GetMessage(9));
+        else
+          Login();
       }
-      if ((GetTextBox(tb_Email) != "") && (GetPasswordBox(tb_Password) != ""))
-        Login();
-      else MessageBox.Show("E-Posta veya parola boş!");
     }
 
     private void cb_Remember_Checked(object sender, RoutedEventArgs e)
@@ -1128,9 +1055,9 @@ namespace WifiProvider
 
     private void Button_Click(object sender, RoutedEventArgs e)
     {
-      for (int i = 0; i < SLKey.Count; i++)
-        Add2Log(SLKey[i] + "	" + SLValue[i].ToString());
-      return;
+      //for (int i = 0; i < SLKey.Count; i++)
+      //  Add2Log(SLKey[i] + "	" + SLValue[i].ToString());
+      //return;
       //if (l_defQuota.Content.ToString().StartsWith("Kot"))
       //{
       //  hndl = WinDivertMethods.WinDivertOpen("ip.SrcAddr=192.168.137.59 or ip.DstAddr=192.168.137.59", WINDIVERT_LAYER.WINDIVERT_LAYER_NETWORK, 1, WinDivertConstants.WINDIVERT_FLAG_DROP);
@@ -1150,8 +1077,8 @@ namespace WifiProvider
       //    if (clients.Find(x => x.Mac == SLKey[i].Substring(12)).Ip==tb_ip.Text) 
       //  Quota = Quota - SLValue[i];
       //return;
-      SLKey.Clear();
-      SLValue.Clear();
+      //SLKey.Clear();
+      //SLValue.Clear();
       return;
       //HANDLE handle;          // WinDivert handle
       WINDIVERT_ADDRESS addr = new WINDIVERT_ADDRESS(); // Packet address
@@ -1245,6 +1172,18 @@ namespace WifiProvider
         cl.Quota = 1234567890;
       }
     }
-}
-   
+
+    private void bt_Forgot_Click(object sender, RoutedEventArgs e)
+    {
+      String _tmp = "";
+      if (GetTextBox(tb_Email).isValidEmail())
+      {
+        _tmp = WSRunner("/SendResetPasswordCode?EmailHash=" + GetTextBox(tb_Email).HashMD5());
+        if (_tmp == null) return;
+        if (CheckResult(ref _tmp)) return;
+      }
+      else MessageBox.Show(dict.GetMessage(8));
+    }
+  }
+
 }

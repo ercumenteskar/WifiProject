@@ -6,16 +6,37 @@ using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using System.Net.Mail;
+using System.Security.Principal;
+using System.Web;
 
 namespace My
 {
   #region MyFunctioNs
   public struct mfn // MyFunctioNs
   {
+    public static bool IsAdministrator()
+    {
+      return (new WindowsPrincipal(WindowsIdentity.GetCurrent())).IsInRole(WindowsBuiltInRole.Administrator);
+    }
+
+    public static string GetMessage(int Code, string Args, int LangId)
+    {
+      return mfn.GetSqlResult("Select dbo.fn_GetMessage(" + Code.ToString() + ", '" + Args + "', " + LangId.ToString() + ")");
+    }
+
     public static string GetSqlResult(string Sql, string ConnectionName = "")
+    {
+      return GetSqlResult(Sql, null, ConnectionName);
+    }
+
+    public static string GetSqlResult(string Sql, List<SqlParameter> Params, string ConnectionName = "")
     {
       SqlConnection conn = GetConnection(ConnectionName);
       SqlCommand cmd = new SqlCommand(Sql, conn);
+      if (Params != null)
+        foreach (var P in Params)
+          cmd.Parameters.Add(P);
       conn.Open();
       SqlDataReader rdr = cmd.ExecuteReader();
       string ret = null;
@@ -167,6 +188,14 @@ namespace My
   #region StringExtension
   public static class StringExtension
   {
+    public static String GetUrlParam(this String Url, String Param)
+    {
+      if (Param == ".")
+        return Url.ReverseString().OrtasiniGetir("?", "/").ReverseString();
+      else
+        return HttpUtility.ParseQueryString(Url.Substring(Url.IndexOf("?")))[Param];
+    }
+
     public static string ReverseString(this string s)
     {
       char[] arr = s.ToCharArray();
@@ -242,6 +271,18 @@ namespace My
       }
       md5.Dispose();
       return sb.ToString();
+    }
+    public static bool isValidEmail(this string Main)
+    {
+      try
+      {
+        var mail = new MailAddress(Main);
+        return mail.Host.Contains(".");
+      }
+      catch
+      {
+        return false;
+      }
     }
   }
   #endregion
@@ -347,7 +388,8 @@ namespace My
   }
   #endregion
   #region DateTimeExtension
-  public static class DateTimeExtension {
+  public static class DateTimeExtension
+  {
     public static DateTime SetTime(this DateTime dt, DateTime? ts)
     {
       if (ts == null)
@@ -374,6 +416,63 @@ namespace My
     }
   }
   #endregion
+
+  public class MyDictionary
+  {
+    private Dictionary<String, int> langlist = new Dictionary<String, int>();
+    private Dictionary<int, Dictionary<int, String>> source = new Dictionary<int, Dictionary<int, String>>();
+    private String LangCode = "";
+
+    public MyDictionary(String langCode, String[] rows)
+    {
+      LangCode = langCode;
+      langlist.Add("en", 1);
+      langlist.Add("tr", 2);
+      //var assembly = Assembly.GetExecutingAssembly();
+      //using (Stream stream = assembly.GetManifestResourceStream("Dict"))
+      //if (stream != null)
+      //using (var reader = new StreamReader(stream))
+      Dictionary<int, String> d = new Dictionary<int, String>();
+      foreach (String item in rows)
+      {
+        int l = 0;
+        if (!langlist.TryGetValue(langCode, out l)) return;
+        {
+          var values = item.Split('¶');
+          if (values[0] == l.ToString())
+          {
+            if (source.Count == 0)
+              source.Add(int.Parse(values[0]), d);
+            d.Add(int.Parse(values[1]), values[2]);
+          }
+        }
+      }
+
+      // TODO source ve langlist i doldur...
+    }
+
+    public String GetMessage(int Id, String Args = "")
+    {
+      String msg = "";
+      //int LangId = -1;
+      //if (!langlist.TryGetValue(LangCode, out LangId)) return "";
+      //if (source.TryGetValue(Id.ToString() + ";" + LangId.ToString(), out msg))
+      
+      Dictionary<int, String> d = source[langlist[LangCode]];
+      if (d.TryGetValue(Id, out msg))
+      {
+        int i = 1;
+        foreach (var item in Args.Split('¶'))
+        {
+          msg = msg.Replace("%s" + i.ToString(), item);
+          i++;
+        }
+      }
+      else msg = "";
+      return msg;
+    }
+  }
+
   /*
   #region SoapExtension
   public class SoapMessageLogger : SoapExtension
