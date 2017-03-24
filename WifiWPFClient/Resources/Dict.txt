@@ -15,6 +15,7 @@
 1¶15¶Password does not match the confirm password.
 1¶16¶Wifi not connected
 1¶17¶Wifi (%s1) not in system.
+1¶18¶.
 2¶1¶%s1 adresi zaten kayıtlı.
 2¶2¶Kullanıcı bulunamadı. Lütfen kontrol edip tekrar deneyin.
 2¶3¶Merhaba, <a href="./ChangePassword2?RPC=%s1">Parolanızı sıfırlamak için bu linke tıklayın.</a>Teşekkürler.
@@ -32,3 +33,4 @@
 2¶15¶Parolalar aynı değil.
 2¶16¶Wifi bağlı değil
 2¶17¶Wifi (%s1) sistemde değil.
+2¶18¶Krediniz olmadığından bağlantıya izin verilmiyor.
