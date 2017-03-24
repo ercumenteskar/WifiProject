@@ -95,7 +95,7 @@ namespace WifiService
       Params.Add(new SqlParameter("@ClientUsageMsg", ClientUsageMsg));
       Params.Add(new SqlParameter("@ProviderUsageMsg", ProviderUsageMsg));
       Params.Add(new SqlParameter("@ConnectionID", System.Data.DbType.Int64) { Value = ConnectionID });
-      return RunAndCatch("Exec dbo.spr_SetUsage @ClientUsageMsg OUTPUT, @ProviderUsageMsg OUTPUT, @ConnectionID OUTPUT; Select isNull(@ClientUsageMsg, '')+';'+isNull(@ProviderUsageMsg, '')", Params, GetCurrentMethod(), AFQ, LangCode);
+      return RunAndCatch("Exec dbo.spr_SetUsage @ClientUsageMsg OUTPUT, @ProviderUsageMsg OUTPUT, @ConnectionID; Select isNull(@ClientUsageMsg, '')+';'+isNull(@ProviderUsageMsg, '')", Params, GetCurrentMethod(), AFQ, LangCode);
     }
 
     public String Register(String Email, String Pass, String AFQ, String LangCode)

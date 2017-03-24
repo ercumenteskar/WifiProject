@@ -12,9 +12,26 @@ using System.Web;
 
 namespace My
 {
-  #region MyFunctioNs
-  public struct mfn // MyFunctioNs
+  public class WifixHelper
   {
+    public String Email;
+  }
+  #region MyFunctioNs
+  public struct mfn 
+  // MyFunctioNs
+  {
+
+    public static bool isValidHexString(string str, int len=-1)
+    {
+      bool ret = (str.Length > 0) && ((str.Length == len) || (len==-1));
+      str = str.ToUpper();
+      for (int i = 0; i < str.Length; i++)
+        //        if (!((((int)str[i] >= 65) && ((int)str[i] <= 70)) || (((int)str[i] >= 48) && ((int)str[i] <= 57))))
+        if (!(str[i] >= 65 && str[i] <= 70 || str[i] >= 48 && str[i] <= 57))
+          ret = false;
+      return ret;
+    }
+
     public static bool IsAdministrator()
     {
       return (new WindowsPrincipal(WindowsIdentity.GetCurrent())).IsInRole(WindowsBuiltInRole.Administrator);

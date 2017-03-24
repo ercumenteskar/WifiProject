@@ -22,11 +22,11 @@ namespace WifiProvider
 
     void AppDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
-#if DEBUG   // In debug mode do not custom-handle the exception, let Visual Studio handle it
-      e.Handled = false;
-#else
+//#if DEBUG   // In debug mode do not custom-handle the exception, let Visual Studio handle it
+//      e.Handled = false;
+//#else
         ShowUnhandledException(e);    
-#endif
+//#endif
     }
 
     void ShowUnhandledException(DispatcherUnhandledExceptionEventArgs e)
@@ -36,7 +36,9 @@ namespace WifiProvider
       string errorMessage = string.Format("An application error occurred.\nPlease check whether your data is correct and repeat the action. If this error occurs again there seems to be a more serious malfunction in the application, and you better close it.\n\nError: {0}\n\nDo you want to continue?\n(if you click Yes you will continue with your work, if you click No the application will close)",
 
       e.Exception.Message + (e.Exception.InnerException != null ? "\n" +
-      e.Exception.InnerException.Message : null));
+      e.Exception.InnerException.Message : null))
+      + (e.Exception.StackTrace != null ? "\n" +
+      e.Exception.StackTrace.ToString().Substring(0, 150) : null);
 
       if (MessageBox.Show(errorMessage, "Application Error", MessageBoxButton.YesNoCancel, MessageBoxImage.Error) == MessageBoxResult.No)
       {
