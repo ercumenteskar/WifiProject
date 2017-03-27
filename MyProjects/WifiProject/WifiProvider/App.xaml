@@ -4,6 +4,6 @@
              StartupUri="ProviderMainWindow.xaml" Startup="Application_Startup"
              DispatcherUnhandledException="AppDispatcherUnhandledException">
     <Application.Resources>
-
+        <BooleanToVisibilityConverter x:Key="booleanToVisibilityConverter" />
     </Application.Resources>
 </Application>

@@ -291,6 +291,8 @@ namespace My
     }
     public static bool isValidEmail(this string Main)
     {
+      return (!String.IsNullOrWhiteSpace(Main) && Main.IndexOf("@") > 0 && Main.Contains(".") && (Main.LastIndexOf(".") < Main.Length - 1) && (Main.Length > 4) && (Main.IndexOf("@") < Main.LastIndexOf(".") - 1));
+      /*catch e düştükçe debug listesine hata yazıp kafa karıştırıyordu, gıcık oldum
       try
       {
         var mail = new MailAddress(Main);
@@ -300,6 +302,7 @@ namespace My
       {
         return false;
       }
+      */
     }
   }
   #endregion
@@ -438,7 +441,8 @@ namespace My
   {
     private Dictionary<String, int> langlist = new Dictionary<String, int>();
     private Dictionary<int, Dictionary<int, String>> source = new Dictionary<int, Dictionary<int, String>>();
-    private String LangCode = "";
+    private String _langCode = "";
+    public String LangCode { get { return _langCode; } private set { _langCode = value; } }
 
     public MyDictionary(String langCode, String[] rows)
     {

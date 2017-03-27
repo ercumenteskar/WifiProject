@@ -18,3 +18,5 @@ C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.Propert
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.csproj.GenerateResource.Cache
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.exe
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.pdb
+C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\App.baml
+C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\GeneratedInternalTypeHelper.g.cs
