@@ -16,10 +16,10 @@ using System.ServiceProcess;
 
 namespace WifiProvider
 {
-  public class WifimViewModel : INotifyPropertyChanged
+  public class ProviderViewModel : INotifyPropertyChanged
   {
     #region Constructor&Destructor
-    public WifimViewModel()
+    public ProviderViewModel()
     {
       String resource_data = Properties.Resources.Dict;
       String[] rows = resource_data.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
@@ -47,10 +47,7 @@ namespace WifiProvider
       }
       wc = new WifiCommon(dict, ProjectName);
     }
-    ~WifimViewModel()
-    {
-      //Disconnect();
-    }
+
     #endregion
     #region Classes
     public class Client

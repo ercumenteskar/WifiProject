@@ -34,12 +34,12 @@ namespace WifiProvider
         get { return System.Text.Encoding.UTF8; }
       }
     }
-    public WifimViewModel vm;
+    public ProviderViewModel vm;
     TextBoxOutputter outputter;
     public MainWindow()
     {
       InitializeComponent();
-      vm = new WifimViewModel();
+      vm = new ProviderViewModel();
       DataContext = vm;
       outputter = new TextBoxOutputter(tb_Log);
       Console.SetOut(outputter);
