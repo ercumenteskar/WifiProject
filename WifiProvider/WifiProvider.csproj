@@ -118,7 +118,7 @@
       <DependentUpon>Reference.svcmap</DependentUpon>
     </Compile>
     <Compile Include="WifiCommon.cs" />
-    <Compile Include="WifimViewModel.cs" />
+    <Compile Include="ProviderViewModel.cs" />
     <Compile Include="WinDivert.cs" />
     <Compile Include="WinFuncs.cs" />
     <Page Include="ProviderMainWindow.xaml">
