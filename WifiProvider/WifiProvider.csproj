@@ -108,6 +108,7 @@
     <Compile Include="..\My.cs">
       <Link>My.cs</Link>
     </Compile>
+    <Compile Include="WifiAccount.cs" />
     <Compile Include="IcsManager.cs" />
     <Compile Include="MyWebServer.cs" />
     <Compile Include="RelayCommand.cs" />
@@ -116,9 +117,10 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.svcmap</DependentUpon>
     </Compile>
-    <Compile Include="WifimModel.cs" />
+    <Compile Include="WifiCommon.cs" />
     <Compile Include="WifimViewModel.cs" />
     <Compile Include="WinDivert.cs" />
+    <Compile Include="WinFuncs.cs" />
     <Page Include="ProviderMainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -172,21 +174,6 @@
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
-    <WCFMetadataStorage Include="Service References\WifiService\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Service References\WifiService\configuration91.svcinfo" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Service References\WifiService\configuration.svcinfo" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Service References\WifiService\Reference.svcmap">
-      <Generator>WCF Proxy Generator</Generator>
-      <LastGenOutput>Reference.cs</LastGenOutput>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5">
       <Visible>False</Visible>
       <ProductName>Microsoft .NET Framework 4.5 %28x86 and x64%29</ProductName>
@@ -207,7 +194,22 @@
     <Resource Include="Resources\Dict.txt" />
   </ItemGroup>
   <ItemGroup>
+    <WCFMetadataStorage Include="Service References\WifiService\" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="Service References\WifiService\Service1.disco" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Service References\WifiService\configuration91.svcinfo" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Service References\WifiService\configuration.svcinfo" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Service References\WifiService\Reference.svcmap">
+      <Generator>WCF Proxy Generator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

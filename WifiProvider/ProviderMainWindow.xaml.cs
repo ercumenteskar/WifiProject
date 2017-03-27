@@ -1,96 +1,105 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
-using ARSoft.Tools.Net.Dns;
-using My;
-using PacketDotNet;
-using SharpPcap;
-using System.Diagnostics;
-using System.Net;
-using System.Net.NetworkInformation;
 using System.Threading;
-using Microsoft.Win32;
 using System.Windows.Controls;
 using System.Windows.Threading;
-using System.ComponentModel;
-using System.Globalization;
-
-//using System.Net.Http;
+using System.IO;
+using System.Text;
 
 namespace WifiProvider
 {
 
-  public partial class MainWindow //: INotifyPropertyChanged
+  public partial class MainWindow
   {
+    public class TextBoxOutputter : TextWriter
+    {
+      TextBox textBox = null;
+
+      public TextBoxOutputter(TextBox output)
+      {
+        textBox = output;
+      }
+
+      public override void Write(char value)
+      {
+        base.Write(value);
+        textBox.Dispatcher.BeginInvoke(new Action(() =>
+        {
+          textBox.AppendText(DateTime.Now.ToShortTimeString()+"> "+ value.ToString());
+        }));
+      }
+
+      public override Encoding Encoding
+      {
+        get { return System.Text.Encoding.UTF8; }
+      }
+    }
+    public WifimViewModel vm;
+    TextBoxOutputter outputter;
     public MainWindow()
     {
       InitializeComponent();
+      vm = new WifimViewModel();
+      DataContext = vm;
+      outputter = new TextBoxOutputter(tb_Log);
+      Console.SetOut(outputter);
     }
-    private WifimViewModel vm = new WifimViewModel();
-    SimpleAES saes = new SimpleAES();
+
     public string vPassword
     {
-      get { return vm.Password; }
+      get { return vm.Account.Password; }
       set
       {
-        if (vm.Password != value) vm.Password = value;
+        if (vm.Account.Password != value) vm.Account.Password = value;
         if (GetPasswordBox(tb_Password) != value) SetPasswordBox(tb_Password, value);
       }
     }
-    private delegate void UpdateTextCallback(string message);
-    private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+    public string rPassword1
     {
-      vm.Disconnect();
-    }
-    private void Window_Loaded(object sender, RoutedEventArgs e)
-    {
-      DataContext = vm;// this;
-      if (!mfn.IsAdministrator())
+      get { return vm.Account.RegisterPassword1; }
+      set
       {
-        MessageBox.Show(vm.dict.GetMessage(10));
-        Application.Current.Shutdown();
+        if (vm.Account.RegisterPassword1 != value) vm.Account.RegisterPassword1 = value;
+        if (GetPasswordBox(tb_RegisterPassword1) != value) SetPasswordBox(tb_RegisterPassword1, value);
       }
-      SetPasswordBox(tb_Password, vm.Password);
-      if ((vm.Email != "") || (vm.Password != ""))
+    }
+    public string rPassword2
+    {
+      get { return vm.Account.RegisterPassword2; }
+      set
       {
-        tc_RegisterLogin.SelectedIndex = 0;
-        if ((vm.Email != "") && (vm.Password != "") && (vm.cb_AutoLogin==true))
-          vm.bt_LoginCommand.Execute(bt_Login);// RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        else if (vm.Email != "")
-          Dispatcher.BeginInvoke(
-            DispatcherPriority.ContextIdle,
-            new Action(delegate ()
-            {
-              tb_Password.Focus();
-            }));
-        else if (vm.Password != "")
-          Dispatcher.BeginInvoke(
-            DispatcherPriority.ContextIdle,
-            new Action(delegate ()
-            {
-              tb_Email.Focus();
-            }));
+        if (vm.Account.RegisterPassword2 != value) vm.Account.RegisterPassword2 = value;
+        if (GetPasswordBox(tb_RegisterPassword2) != value) SetPasswordBox(tb_RegisterPassword2, value);
       }
     }
 
+    private void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+      SetPasswordBox(tb_Password, vm.Account.Password);
+      if (vm.Account.Email != "")
+        Dispatcher.BeginInvoke(
+          DispatcherPriority.ContextIdle,
+          new Action(delegate ()
+          {
+            tb_Password.Focus();
+          }));
+      else if (vm.Account.Password != "")
+        Dispatcher.BeginInvoke(
+          DispatcherPriority.ContextIdle,
+          new Action(delegate ()
+          {
+            tb_Email.Focus();
+          }));
+    }
+
+/*
     public delegate void UpdateTextCallbacktxtb(TextBox tb, string str);
-    public delegate void UpdateTextCallbackpassb(PasswordBox tb, string str);
     private String GetTextBox(TextBox tb)
     {
       string result = "";
       System.Windows.Application.Current.Dispatcher.Invoke(
         DispatcherPriority.Normal,
         (ThreadStart)delegate { result = tb.Text; });
-      return result;
-    }
-    private String GetPasswordBox(PasswordBox tb)
-    {
-      string result = "";
-      System.Windows.Application.Current.Dispatcher.Invoke(
-        DispatcherPriority.Normal,
-        (ThreadStart)delegate { result = tb.Password; });
       return result;
     }
     private void SetTextBox(TextBox tb, string str)
@@ -105,6 +114,13 @@ namespace WifiProvider
       tb.Text = str;
       Thread.Sleep(100);
     }
+*/
+    public delegate void UpdateTextCallbackpassb(PasswordBox tb, string str);
+    private void _setpasstbox(PasswordBox tb, string str)
+    {
+      tb.Password = str;
+      Thread.Sleep(100);
+    }
     private void SetPasswordBox(PasswordBox tb, string str)
     {
       tb.Dispatcher.Invoke(
@@ -112,46 +128,26 @@ namespace WifiProvider
               new object[] { tb, str }
           );
     }
-    private void _setpasstbox(PasswordBox tb, string str)
+    private String GetPasswordBox(PasswordBox tb)
     {
-      tb.Password = str;
-      Thread.Sleep(100);
+      string result = "";
+      System.Windows.Application.Current.Dispatcher.Invoke(
+        DispatcherPriority.Normal,
+        (ThreadStart)delegate { result = tb.Password; });
+      return result;
     }
-    private void bt_Register_Click(object sender, RoutedEventArgs e)
+
+    private void tb_Password_PasswordChanged(object sender, RoutedEventArgs e)
     {
-      string result = null;
-      if (!GetTextBox(tb_RegisterEmail).isValidEmail())
-        MessageBox.Show(vm.dict.GetMessage(8));
-      else if (GetPasswordBox(tb_RegisterPassword1) == "")
-        MessageBox.Show(vm.dict.GetMessage(9));
-      else if (GetPasswordBox(tb_RegisterPassword1) != GetPasswordBox(tb_RegisterPassword2))
-        MessageBox.Show(vm.dict.GetMessage(15));
-      else
-        result = vm.WSRunner("/Register?Email=" + GetTextBox(tb_RegisterEmail) + "&Pass=" + GetPasswordBox(tb_RegisterPassword1));
-      if (result == null) return;
-      //if (CheckResult(ref result)) return;
-      MessageBox.Show(vm.dict.GetMessage(7));
-      tc_RegisterLogin.SelectedIndex = 0;
-      vm.Email = GetTextBox(tb_RegisterEmail);
-      //SetTextBox(tb_Email, GetTextBox(tb_RegisterEmail));
-      //SetPasswordBox(tb_Password, GetPasswordBox(tb_RegisterPassword1));
-      vm.Password = GetPasswordBox(tb_RegisterPassword1);
-      bt_Login.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+      vPassword = GetPasswordBox(tb_Password);
     }
-    private void bt_Login_Click(object sender, RoutedEventArgs e)
+    private void tb_RegisterPassword1_PasswordChanged(object sender, RoutedEventArgs e)
     {
-      //{
-      //  if (!vm.Email.isValidEmail())
-      //    MessageBox.Show(vm.dict.GetMessage(8));
-      //  else if (vm.Password == "")
-      //    MessageBox.Show(vm.dict.GetMessage(9));
-      //  else
-        
-      //}
+      rPassword1 = GetPasswordBox(tb_RegisterPassword1);
     }
-    private void cb_Remember_Checked(object sender, RoutedEventArgs e)
+    private void tb_RegisterPassword2_PasswordChanged(object sender, RoutedEventArgs e)
     {
-      vm.RememberAction(sender);
+      rPassword2 = GetPasswordBox(tb_RegisterPassword2);
     }
     unsafe private void Button_Click_1(object sender, RoutedEventArgs e)
     {// (ip.SrcAddr>192.168.137.1 and ip.SrcAddr<192.168.137.255) and 
@@ -247,22 +243,11 @@ namespace WifiProvider
         dire = pAddr.Direction;
       */
     }
-    private void bt_Forgot_Click(object sender, RoutedEventArgs e)
-    {
-      String _tmp = "";
-      if (vm.Email.isValidEmail())
-      {
-        _tmp = vm.WSRunner("/SendResetPasswordCode?EmailHash=" + vm.EmailHash);
-        if (_tmp == null) return;
-        //if (CheckResult(ref _tmp)) return;
-      }
-      else MessageBox.Show(vm.dict.GetMessage(8));
-    }
-    private void tb_Password_PasswordChanged(object sender, RoutedEventArgs e)
-    {
-      vPassword = GetPasswordBox(tb_Password);
-    }
 
+    private void mainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+    {
+      vm.Disconnect();
+    }
   }
 
 }

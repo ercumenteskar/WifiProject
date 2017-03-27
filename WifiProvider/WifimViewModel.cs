@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using My;
 using System.Net.NetworkInformation;
-using System.Windows;
 using System.Diagnostics;
 using System.Threading;
 using ARSoft.Tools.Net.Dns;
@@ -14,32 +12,47 @@ using SharpPcap;
 using System.Net;
 using PacketDotNet;
 using System.Globalization;
-using System.Windows.Controls;
-using Microsoft.Win32;
-using System.Windows.Input;
 using System.ServiceProcess;
 
 namespace WifiProvider
 {
-  class WifimViewModel : INotifyPropertyChanged
+  public class WifimViewModel : INotifyPropertyChanged
   {
+    #region Constructor&Destructor
     public WifimViewModel()
     {
       String resource_data = Properties.Resources.Dict;
       String[] rows = resource_data.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
       dict = new MyDictionary(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, rows);
-      _canLoginClick = true;
-      if ((Registry.CurrentUser.OpenSubKey(_projectregaddr) != null) && (Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue("PEmailRemember") != null) && (Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue("PEmailRemember").ToString() != ""))
-        Email = saes.DecryptToString(Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue("PEmailRemember").ToString());
-      if ((Registry.CurrentUser.OpenSubKey(_projectregaddr) != null) && (Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue("PPassRemember") != null) && (Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue("PPassRemember").ToString() != ""))
-        Password = saes.DecryptToString(Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue("PPassRemember").ToString());
-      if (Email != "") cb_PEmailRememberIsChecked = true;
-      if (Password != "") cb_PPassRememberIsChecked = true;
-      if ((Registry.CurrentUser.OpenSubKey(_projectregaddr) != null) && (Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue("AutoLogin") != null))
-        cb_AutoLogin = (Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue("AutoLogin").ToString() == "*");
-      if ((Registry.CurrentUser.OpenSubKey(_projectregaddr) != null) && (Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue("AutoConnect") != null))
-        cb_AutoConnect = (Registry.CurrentUser.OpenSubKey(_projectregaddr).GetValue("AutoConnect").ToString() == "*");
+      account = new WifiAccount("P", ProjectName, dict);
+      if (wf.ReadFromRegistry("PEmailRemember").ToString() != "")
+        Account.Email = saes.DecryptToString(wf.ReadFromRegistry("PEmailRemember").ToString());
+      if (wf.ReadFromRegistry("PPassRemember").ToString() != "")
+        Account.Password = saes.DecryptToString(wf.ReadFromRegistry("PPassRemember").ToString());
+      if (Account.Email != "") Account.cb_EmailRememberIsChecked = true;
+      if (Account.Password != "") Account.cb_PassRememberIsChecked = true;
+      Account.cb_AutoLogin = (wf.ReadFromRegistry("AutoLogin").ToString() == "*");
+      Account.cb_AutoConnect = (wf.ReadFromRegistry("AutoConnect").ToString() == "*");
+
+      if (!mfn.IsAdministrator())
+      {
+        wf.ShowMessageBox(dict.GetMessage(10));
+        wf.Shutdown();
+      }
+      if ((Account.Email != "") || (Account.Password != ""))
+      {
+        Account.tc_RegisterLoginSelectedIndex = 0;
+        if ((Account.Email != "") && (Account.Password != "") && (Account.cb_AutoLogin == true))
+          LoginCommand();
+      }
+      wc = new WifiCommon(dict, ProjectName);
     }
+    ~WifimViewModel()
+    {
+      //Disconnect();
+    }
+    #endregion
+    #region Classes
     public class Client
     {
       public String Mac = "000000000000";
@@ -50,15 +63,6 @@ namespace WifiProvider
       public long Usage = 0;
       public int WDHandle = 0;
       private bool _online = false;
-      //public void refresh()
-      //{
-      //  IntPtr tmp = wdhndl;
-      //  string others = "";
-      //  //while clients
-      //  wdhndl = WinDivertMethods.WinDivertOpen("(not (ip.DstAddr>=192.168.137.1 and ip.DstAddr<=192.168.137.255)) "+others, WINDIVERT_LAYER.WINDIVERT_LAYER_NETWORK, 1, WinDivertConstants.WINDIVERT_FLAG_DROP);
-      //  if (tmp != IntPtr.Zero)
-      //    WinDivertMethods.WinDivertClose(tmp);
-      //}
       public bool Online
       {
         get { return _online; }
@@ -110,25 +114,24 @@ namespace WifiProvider
         this.Online = false;
       }
     }
+    #endregion
+    #region Commands
 
-    private bool _canLoginClick;
+
     private RelayCommand _bt_LoginCommand;
-    public ICommand bt_LoginCommand
+    public RelayCommand bt_LoginCommand
     {
       get
       {
         if (_bt_LoginCommand == null)
         {
-          _bt_LoginCommand = new RelayCommand(p => LoginCommand(), p => _canLoginClick);
+          _bt_LoginCommand = new RelayCommand(p => LoginCommand());
         }
         return _bt_LoginCommand;
       }
     }
-
-    public bool canConnect { get { return Logged || Connected; } }
-    //private bool canConnect(object obj) { return _canConnect; } // ekran güncellemesi takılıyordu, mouse u üzerine getirene kadar isenable güncellenmiyordu
     private RelayCommand _bt_ConnectCommand;
-    public ICommand bt_ConnectCommand
+    public RelayCommand bt_ConnectCommand
     {
       get
       {
@@ -136,42 +139,7 @@ namespace WifiProvider
         return _bt_ConnectCommand;
       }
     }
-    public bool canLogin { get { return Email.isValidEmail() && (Password != ""); } }
-
-    WifimModel m = new WifimModel();
-    public event PropertyChangedEventHandler PropertyChanged;
-    private void OnPropertyChanged(String property) { PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property)); }
-    public WifiService.Service1Client WCF = new WifiService.Service1Client();
-    private DnsServer dnsServer;
-    private ICaptureDevice device;
-    public List<Client> clients = new List<Client>();
-    public static IntPtr wdhndl = IntPtr.Zero;
-    //BackgroundWorker bwStopSystem;
-    //BackgroundWorker bwStartSystem;
-    int GetSetUsageInterval = 3000;
-    public MyDictionary dict;
-    private static String providerIp = "";
-    private MyWebServer ws;
-    private bool wsStarted = false;
-    private String SecurityCode = "";
-    public static string _projectName = "Wifi";
-    public string _projectregaddr = "Software\\" + _projectName;
-    string langCode = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-    SimpleAES saes = new SimpleAES();
-    Thread thrGetSetUsage;
-    private bool? _cb_PEmailRememberIsChecked = false;
-    public bool? cb_PEmailRememberIsChecked { get { return _cb_PEmailRememberIsChecked; } set { _cb_PEmailRememberIsChecked = value; OnPropertyChanged(nameof(cb_PEmailRememberIsChecked)); } }
-    private bool? _cb_PPassRememberIsChecked = false;
-    public bool? cb_PPassRememberIsChecked { get { return _cb_PPassRememberIsChecked; } set { _cb_PPassRememberIsChecked = value; OnPropertyChanged(nameof(cb_PPassRememberIsChecked)); } }
-    private bool? _cb_AutoLogin = false;
-    public bool? cb_AutoLogin { get { return _cb_AutoLogin; } set { _cb_AutoLogin = value; OnPropertyChanged(nameof(cb_AutoLogin)); } }
-    private bool? _cb_AutoConnect = false;
-    public bool? cb_AutoConnect { get { return _cb_AutoConnect; } set { _cb_AutoConnect = value; OnPropertyChanged(nameof(cb_AutoConnect)); } }
-    private String password = "";
-    public String Password { get { return password; } set { password = value; OnPropertyChanged(nameof(Password)); OnPropertyChanged(nameof(canLogin)); } }
-    public String Email { get { return m.Email; }
-      set { m.Email = value; OnPropertyChanged(nameof(Email)); OnPropertyChanged(nameof(canLogin)); } }
-    public String EmailHash { get { return Email.HashMD5(); } }
+    public bool canConnect { get { return Account.Logged || Connected; } }
     private bool _connected = false;
     public bool Connected
     {
@@ -184,26 +152,105 @@ namespace WifiProvider
       }
     }
     public string bt_ConnectContent { get { return Connected ? "Disconnect" : "Connect"; } }
-    public string bt_LoginContent
+    #endregion
+    #region Globals
+    public WifiCommon wc;
+    //public WifiAccount Account;
+    private WifiAccount account;
+    public WifiAccount Account
     {
-      get { return Logged ? "Logout" : "Login"; }
+      get { return account; }
+      //set { account = value; }
     }
-    private bool _logged = false;
-    public bool Logged
+
+    public event PropertyChangedEventHandler PropertyChanged;
+    private void OnPropertyChanged(String property) { PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property)); }
+    private WinFuncs wf = new WinFuncs(ProjectName);
+    private DnsServer dnsServer;
+    private ICaptureDevice device;
+    public List<Client> clients = new List<Client>();
+    public static IntPtr wdhndl = IntPtr.Zero;
+    private int GetSetUsageInterval = 3000;
+    public MyDictionary dict;
+    private static String providerIp = "";
+    private MyWebServer ws;
+    private bool wsStarted = false;
+    public static string ProjectName = "Wifi";
+    string langCode = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+    SimpleAES saes = new SimpleAES();
+    Thread thrGetSetUsage;
+    #endregion
+    #region Properties
+    /*
+    private int _tc_RegisterLoginSelectedIndex = 1;
+    public int tc_RegisterLoginSelectedIndex { get { return _tc_RegisterLoginSelectedIndex; } set { _tc_RegisterLoginSelectedIndex = value; OnPropertyChanged(nameof(tc_RegisterLoginSelectedIndex)); } }
+    private bool? _Account.cb_PEmailRememberIsChecked = false;
+    public bool? Account.cb_PEmailRememberIsChecked { get { return _Account.cb_PEmailRememberIsChecked; } set { _Account.cb_PEmailRememberIsChecked = value; RememberAction(value == true, "PEmailRemember"); OnPropertyChanged(nameof(Account.cb_PEmailRememberIsChecked)); } }
+    private bool? _Account.cb_PPassRememberIsChecked = false;
+    public bool? Account.cb_PPassRememberIsChecked { get { return _Account.cb_PPassRememberIsChecked; } set { _Account.cb_PPassRememberIsChecked = value; RememberAction(value == true, "PPassRemember"); OnPropertyChanged(nameof(Account.cb_PPassRememberIsChecked)); } }
+    private bool? _cb_AutoLogin = false;
+    public bool? cb_AutoLogin { get { return _cb_AutoLogin; } set { _cb_AutoLogin = value; RememberAction(value == true, "AutoLogin"); OnPropertyChanged(nameof(cb_AutoLogin)); } }
+    private bool? _cb_AutoConnect = false;
+    public bool? cb_AutoConnect { get { return _cb_AutoConnect; } set { _cb_AutoConnect = value; RememberAction(value == true, "AutoConnect"); OnPropertyChanged(nameof(cb_AutoConnect)); } }
+    private String Account.Password = "";
+    public String Account.Password { get { return Account.Password; } set { Account.Password = value; OnPropertyChanged(nameof(Account.Password)); OnPropertyChanged(nameof(canLogin)); } }
+    private String _email="";
+    public String Account.Email
     {
-      get { return _logged; }
+      get { return _email; }
+      set { _email = value; OnPropertyChanged(nameof(Account.Email)); OnPropertyChanged(nameof(canLogin)); }
+    }
+    public String Account.EmailHash { get { return Account.Email.ToLower().HashMD5(); } }
+    private String _Account.RegisterEmail = "";
+    public String Account.RegisterEmail
+    {
+      get { return _Account.RegisterEmail; }
+      set { _Account.RegisterEmail = value; OnPropertyChanged(nameof(Account.RegisterEmail)); }
+    }
+    private String _Account.RegisterPassword1 = "";
+    public String Account.RegisterPassword1
+    {
+      get { return _Account.RegisterPassword1; }
+      set { _Account.RegisterPassword1 = value; OnPropertyChanged(nameof(Account.RegisterPassword1)); }
+    }
+    private String _Account.RegisterPassword2 = "";
+    public String Account.RegisterPassword2
+    {
+      get { return _Account.RegisterPassword2; }
+      set { _Account.RegisterPassword2 = value; OnPropertyChanged(nameof(Account.RegisterPassword2)); }
+    }
+    private bool _Account.Connected = false;
+    public bool Account.Connected
+    {
+      get { return _Account.Connected; }
       set
       {
-        _logged = value;
+        _Account.Connected = value;
+        OnPropertyChanged(nameof(bt_ConnectContent));
+        OnPropertyChanged(nameof(canConnect));
+      }
+    }
+    public string bt_ConnectContent { get { return Account.Connected ? "Disconnect" : "Connect"; } }
+    public string bt_LoginContent
+    {
+      get { return Account.Logged ? "Logout" : "Login"; }
+    }
+    private bool _Account.Logged = false;
+    public bool Account.Logged
+    {
+      get { return _Account.Logged; }
+      set
+      {
+        _Account.Logged = value;
+        OnPropertyChanged(nameof(tb_EmailIsEnabled));
+        OnPropertyChanged(nameof(tb_PasswordIsEnabled));
         OnPropertyChanged(nameof(bt_LoginContent));
         OnPropertyChanged(nameof(canConnect));
         if (!value) Quota = 0;
       }
     }
-    public bool? _tb_PasswordIsEnabled = true;
-    public bool? tb_PasswordIsEnabled { get { return _tb_PasswordIsEnabled; } set { _tb_PasswordIsEnabled = value; OnPropertyChanged(nameof(tb_PasswordIsEnabled)); } }
-    public bool? _tb_EmailIsEnabled = true;
-    public bool? tb_EmailIsEnabled { get { return _tb_EmailIsEnabled; } set { _tb_EmailIsEnabled = value; OnPropertyChanged(nameof(tb_EmailIsEnabled)); } }
+    public bool? tb_PasswordIsEnabled { get { return !Account.Logged; } } // set { _tb_PasswordIsEnabled = value; OnPropertyChanged(nameof(tb_PasswordIsEnabled)); } 
+    public bool? tb_EmailIsEnabled { get { return !Account.Logged; } } // set { _tb_EmailIsEnabled = value; OnPropertyChanged(nameof(tb_EmailIsEnabled)); } 
     private long quota = 0;
     public long Quota { get { return quota < 0 ? 0 : quota; } set { quota = value; OnPropertyChanged(nameof(QuotaStr)); } }
     public string QuotaStr
@@ -220,12 +267,16 @@ namespace WifiProvider
           return (Quota / (1024 * 1024)).ToString("###,###,###,###,##0 MB");
       }
     }
+    */
     private int waitcount = 0;
     private int Waitcount { get { return waitcount; } set { waitcount = value; OnPropertyChanged(nameof(MainGridVisibility)); } }
-    public Visibility MainGridVisibility { get { return Waitcount == 0 ? Visibility.Visible : Visibility.Hidden; } }
+    public bool MainGridVisibility { get { return Waitcount == 0; } } //  ? Visibility.Visible : Visibility.Hidden; 
+    #endregion
+    #region Methods
     private void RuninThread(DoWorkEventHandler work, RunWorkerCompletedEventHandler afterThat)
     {
       ShowWait();
+      AutoResetEvent _resetEvent = new AutoResetEvent(false);
       BackgroundWorker bw = new BackgroundWorker();
       bw.DoWork += work;
       if (afterThat != null)
@@ -244,12 +295,11 @@ namespace WifiProvider
     {
       RuninThread(new DoWorkEventHandler(thrStopSystem), null); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); HideWait(); }
     }
-
     private void thrStartSystem(object sender, DoWorkEventArgs e)
     {
       String source = "";
       String hotspot = "";
-      if (!Logged)
+      if (!Account.Logged)
         return;
       if (wdhndl != IntPtr.Zero)
         WinDivertMethods.WinDivertClose(wdhndl);
@@ -259,15 +309,15 @@ namespace WifiProvider
           nicx.Add(nic);
       if (nicx.Count > 1)
       {
-        MessageBox.Show("Paylaşılabilecek birden fazla internet kaynağı bulundu. Lütfen kontrol edip programı tekrar deneyin.");
-        Application.Current.Shutdown();
+        wf.ShowMessageBox("Paylaşılabilecek birden fazla internet kaynağı bulundu. Lütfen kontrol edip programı tekrar deneyin.");
+        wf.Shutdown();
       }
       else if (nicx.Count == 1)
         source = nicx[0].Id;
       else
       {
-        MessageBox.Show("İnternet kaynağı bulunamadı. Lütfen kontrol edip programı tekrar deneyin.");
-        Application.Current.Shutdown();
+        wf.ShowMessageBox("İnternet kaynağı bulunamadı. Lütfen kontrol edip programı tekrar deneyin.");
+        wf.Shutdown();
       }
       Netsh("wlan set hostednetwork mode=allow ssid=wifix key=erci1234"); //  key=ercierci
       Add2Log("Hotspot Created");
@@ -277,15 +327,15 @@ namespace WifiProvider
           nicx.Add(nic);
       if (nicx.Count > 1)
       {
-        MessageBox.Show("Barındırılmış Ağ seçilemedi. Bilgisayarınızda birden fazla sanal wifi sürücüsü görünüyor.");
-        Application.Current.Shutdown();
+        wf.ShowMessageBox("Barındırılmış Ağ seçilemedi. Bilgisayarınızda birden fazla sanal wifi sürücüsü görünüyor.");
+        wf.Shutdown();
       }
       else if (nicx.Count == 1)
         hotspot = nicx[0].Id;
       else
       {
-        MessageBox.Show("Paylaşım için gerekli sürücüler bulunamadı. Lütfen kontrol edip programı tekrar çalıştırın.");
-        Application.Current.Shutdown();
+        wf.ShowMessageBox("Paylaşım için gerekli sürücüler bulunamadı. Lütfen kontrol edip programı tekrar çalıştırın.");
+        wf.Shutdown();
       }
       EnableICS(source, hotspot, true);
       Add2Log("Internet Connection Sharing Enabled");
@@ -302,7 +352,7 @@ namespace WifiProvider
       #region DNS SERVER
       dnsServer = new DnsServer(IPAddress.Any, 10, 10);
       dnsServer.QueryReceived += OnQueryReceived;
-      //dnsServer.ClientConnected += OnClientConnected;
+      //dnsServer.ClientAccount.Connected += OnClientAccount.Connected;
       try
       {
         dnsServer.Start();
@@ -331,7 +381,7 @@ namespace WifiProvider
           {
             throw;
           }
-          MessageBox.Show("Dns Server açılamadı: SocketException");
+          wf.ShowMessageBox("Dns Server açılamadı: SocketException");
         }
         else throw;
       }
@@ -346,8 +396,8 @@ namespace WifiProvider
         providerIp = v.Addr.ipAddress.ToString(); // Anlamadığım bir sebepten dolayı bazen 0.0.0.0 geliyor. Ya da 192.168.0.1 // Ostoto kurup kaldırınca böyle oldu...
       else
       {
-        MessageBox.Show("ProviderIp alınamadı");
-        Application.Current.Shutdown();
+        wf.ShowMessageBox("ProviderIp alınamadı");
+        wf.Shutdown();
       }
       //if (!providerIp.Contains(".")) 
       //  providerIp = GetValue(device.ToString().Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries)[8], "Addr:      ");
@@ -382,7 +432,6 @@ namespace WifiProvider
       //sss = device.ToString();
       #endregion
     }
-
     private void thrStopSystem(object sender, DoWorkEventArgs e)
     {
       Netsh("wlan stop hostednetwork");
@@ -409,17 +458,14 @@ namespace WifiProvider
       Connected = false;
       Add2Log("Sistem kapatıldı.");
     }
-
     public void ShowWait()
     {
       Waitcount++;
     }
-
     public void HideWait()
     {
       Waitcount--;
     }
-
     async Task OnQueryReceived(object sender, QueryReceivedEventArgs e)
     {
       DnsMessage query = e.Query as DnsMessage;
@@ -511,7 +557,6 @@ namespace WifiProvider
           cl = new Client(d_mac, d_ip);
           clients.Add(cl);
           Add2Log(cl.Mac + "(" + cl.Ip + ") Added (" + GetHostName(cl.Ip) + ")");
-          //SetTextBox(tb_ip, cl.Ip);
         }
         if (cl == null) return;
         //if ((cl.Ip != d_ip) && (d_ip.StartsWith(providerIp.Substring(0, providerIp.LastIndexOf('.')) + "."))) // Bu mac adresi için önceden yapılan kayıttan sonra ip adresi değişti ise
@@ -557,16 +602,17 @@ namespace WifiProvider
         reqmac = GetMacAddress(RemoteIp); //null döndüğü için patlıyor....
       Client _client = clients.Find(x => x.Mac == reqmac);
       if (_client == null)
-        return "null";
+        _client = clients[0];
+        //return "null";
       if (command == "Remove")
       {
         String Email = url.GetUrlParam("Email");
-        WCF.Remove(Email);
+        wc.WCF.Remove(Email);
         return "<a href='Register?Email='>Register</a>";
       }
       else if (command == "Register")
       {
-        _temp = WCF.Register(url.GetUrlParam("Email"), url.GetUrlParam("Pass"), url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
+        _temp = wc.WCF.Register(url.GetUrlParam("Email"), url.GetUrlParam("Pass"), url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
         if (mfn.isValidHexString(_temp, 32))
           _client.SecurityCode = _temp;
         return _temp;
@@ -574,7 +620,7 @@ namespace WifiProvider
       else if (command == "GetSecurityCode")
       {
         String _EmailHash = url.GetUrlParam("EmailHash");
-        _temp = WCF.GetSecurityCode(_EmailHash, url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
+        _temp = wc.WCF.GetSecurityCode(_EmailHash, url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
         if (mfn.isValidHexString(_temp, 32))
         {
           _client.EmailHash = _EmailHash;
@@ -588,7 +634,7 @@ namespace WifiProvider
       }
       else if (command == "Login")
       {
-        _temp = WCF.Login(url.GetUrlParam("Evidence"), url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
+        _temp = wc.WCF.Login(url.GetUrlParam("Evidence"), url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
         long qt = 0;
         if ((_temp.Length >= 34) && mfn.isValidHexString(_temp.Substring(0, 32)) && (_temp[32] == ';') && (long.TryParse(_temp.Substring(33), out qt)))//        if (_temp.Length >= 34)
         {
@@ -605,8 +651,8 @@ namespace WifiProvider
       {
         if (_client.Quota == 0) return "¶E:" + dict.GetMessage(18);
         String ClientEvidence = url.GetUrlParam("ClientEvidence");
-        _temp = myEvidence();
-        _temp = WCF.ConnectUS(ClientEvidence, _temp, url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
+        _temp = Account.myEvidence();
+        _temp = wc.WCF.ConnectUS(ClientEvidence, _temp, url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
         long qt;
         if ((_temp.Length >= 67) &&
           mfn.isValidHexString(_temp.Substring(0, 32)) && (_temp[64] == ';') &&
@@ -614,7 +660,7 @@ namespace WifiProvider
           (long.TryParse(_temp.Substring(130), out qt))) // if (_temp.Length >= 67)
         {
           _client.SecurityCode = _temp.Substring(0, 32);
-          SecurityCode = _temp.Substring(65, 32);
+          Account.SecurityCode = _temp.Substring(65, 32);
           _client.ConnectionID = qt.ToString();
           _client.Usage = 0;
           Add2Log("BAĞLANAN VAR. CONNECTION ID : " + _client.ConnectionID.ToString());
@@ -638,7 +684,7 @@ namespace WifiProvider
       //  //  return "error:No Connection on " + _client.Ip + " (" + _client.Mac + ")"; else 
       //  if ((_client.EmailHash.Equals(_emh)) && (_client.ConnectionID.ToString().Equals(_cid)) && (_client.ConnectionID.ToString() != ""))
       //  {
-      //    //return "<a href='SetUsage?Message=" + _client.EmailHash + (_client.SecurityCode + (EmailHash + _client.Password).HashMD5() + (usg.ToString()).HashMD5()).HashMD5() + usg.ToString() + "'>SetUsage</a>";
+      //    //return "<a href='SetUsage?Message=" + _client.EmailHash + (_client.SecurityCode + (Account.EmailHash + _client.Password).HashMD5() + (usg.ToString()).HashMD5()).HashMD5() + usg.ToString() + "'>SetUsage</a>";
       //    Add2Log("KULLANIM BILGISI GONDERILDI. KULLANIM : " + _client.Usage.ToString() + " CONNECTION ID : " + _client.ConnectionID.ToString());
       //    if (_client.Usage > _client.Quota)
       //    {
@@ -665,7 +711,7 @@ namespace WifiProvider
           //long amount = _temp.Substring(64);
           //if (amount > _client.Quota) amount = _client.Quota;// imza, gelen amount değerine göre, o yüzden değiştiremem...
           //Add2Log("Gelen amount : " + amount.ToString("###,###,###") + " _temp:" + _temp);
-          _temp = WCF.SetUsage(_temp, myEvidence(amount.ToString()), long.Parse(_client.ConnectionID), url.GetUrlParam("AFQ"), langCode);
+          _temp = wc.WCF.SetUsage(_temp, Account.myEvidence(amount.ToString()), long.Parse(_client.ConnectionID), url.GetUrlParam("AFQ"), langCode);
           if (((_client.Usage > amount * 1.001) && (_client.Usage > amount + 1024 * 1024)) || (amount >= _client.Quota)) // 1/1000 den fazla fark varsa ve bu fark 1MB ı aşmışsa...
             return "¶E:Kotanız bittiği için bağlantınız sonlandırıldı.";
 
@@ -673,13 +719,13 @@ namespace WifiProvider
           {
             _client.LastQuery = DateTime.Now;
             _client.SecurityCode = _temp.Substring(0, 32);
-            SecurityCode = _temp.Substring(33, 32);
+            Account.SecurityCode = _temp.Substring(33, 32);
             Add2Log("KULLANIM BILGISI ONAYI ALINDI. KULLANIM : " + amount.ToString() + " CONNECTION ID : " + _client.ConnectionID.ToString());
             return _client.SecurityCode;
           }
           else return _temp;
         }
-        else return "¶E:" + _client.EmailHash + "<>" + EmailHash;
+        else return "¶E:" + _client.EmailHash + "<>" + Account.EmailHash;
       }
       else if (command == "Disconnect")
       {
@@ -688,12 +734,11 @@ namespace WifiProvider
         return "";// "BAĞLANTI SONLANDIRILDI. CONNECTION ID : " + url.GetUrlParam("ConnectionID");
       }
       else
-        return "<a href='\\" + providerIp + @"\" + _projectName + @"\WifiWPFClient.exe'>Download Client</a>";
+        return "<a href='\\" + providerIp + @"\" + ProjectName + @"\WifiWPFClient.exe'>Download Client</a>";
       //      return "<a href='GetSecurityCode?EmailHash=5CAA8CD9E281E9A815AD88C79DB734FF&testercument=1'>GetSecurityCode</a>";
       //      else return "<a href='Remove?Email=5448302899'>DELETE 5448302899</a>";
       //else return "WELLCOME !! YOU HAVE TO RUN OUR CLIENT APPLICATON";
     }
-
     private void RemoveClient(Client cl)
     {
       if (cl != null)
@@ -840,169 +885,45 @@ namespace WifiProvider
         Thread.Sleep(GetSetUsageInterval);
       }
     }
-    private String myEvidence(String Mesaj = "")
-    {
-      if (!SetSecurityCode())
-        return "";
-      else
-        return EmailHash + (SecurityCode + (EmailHash + Password).HashMD5() + Mesaj.HashMD5()).HashMD5() + Mesaj;
-    }
     private bool yetkili(Client cl)
     {
       return ((cl != null) && (cl.Online));
     }
-    public bool SetSecurityCode()
-    {
-      SecurityCode = WSRunner("/GetSecurityCode?EmailHash=" + EmailHash);
-      if (SecurityCode == null) return false;
-      return !CheckResult(ref SecurityCode);
-    }
-    public String WSRunner(String url)
-    {
-      string AFQ = null;
-      while (CheckResult(ref AFQ))
-      {
-        if (CheckForInternetConnection())
-        {
-          switch (url.GetUrlParam("."))
-          {
-            case "Register": AFQ = WCF.Register(url.GetUrlParam("Email"), url.GetUrlParam("Pass"), AFQ, langCode); break;
-            case "Remove": WCF.Remove(url.GetUrlParam("Email")); AFQ = ""; break;
-            case "GetSecurityCode": AFQ = WCF.GetSecurityCode(url.GetUrlParam("EmailHash"), AFQ, langCode); break;
-            case "Login": AFQ = WCF.Login(url.GetUrlParam("Evidence"), AFQ, langCode); break;
-            case "SendResetPasswordCode": AFQ = WCF.SendResetPasswordCode(url.GetUrlParam("EmailHash"), AFQ, langCode); break;
-          }
-        }
-        else // Please check your internet connection.
-          AFQ = "¶E:" + dict.GetMessage(6);
-      }
-      return AFQ;
-    }
-
-    private bool CheckResult(ref string result)
-    {
-      // rtn true ise checkresult sonrasında komut (Ör: WCF.Register) çalıştırılır, false ise çalıştırılmaz
-      // result null döndürülürse komut çalıştırlmadığı gibi dış method da sonlandırılır (Ör: bt_registerclick)
-      bool rtn = false;
-      if (result == null)
-      {
-        result = "";
-        rtn = true;
-      }
-      else if (result.Contains("¶")) //¶ : ASCII 20
-      {
-        string[] sl = result.Split('¶');
-        result = result.Substring(0, result.IndexOf("¶"));
-        for (int i = 1; i < sl.Length; i++)
-        {
-          if (sl[i].StartsWith("M:")) // Message
-          {
-            Add2Log(sl[i]);
-            MessageBox.Show(sl[i].Substring(sl[i].IndexOf(":") + 1), "", MessageBoxButton.OK, MessageBoxImage.Asterisk);
-          }
-          else if (sl[i].StartsWith("Q:")) // Question
-          {
-            Add2Log(sl[i]); // //§ : ASCII 21
-            bool cevaplimi = sl[i].Substring(sl[i].IndexOf("§") + 1).StartsWith("-");
-            MessageBoxButton mbb = sl[i].Substring(sl[i].IndexOf("§") + 1) == "OK" ? MessageBoxButton.OK : sl[i].Substring(sl[i].IndexOf("§") + 1) == "OKCancel" ? MessageBoxButton.OKCancel : sl[i].Substring(sl[i].IndexOf("§") + 1) == "YesNo" ? MessageBoxButton.YesNo : sl[i].Substring(sl[i].IndexOf("§") + 1) == "YesNoCancel" ? MessageBoxButton.YesNoCancel : MessageBoxButton.OK;
-            MessageBoxResult mbr = MessageBoxResult.None;
-            while (mbr == MessageBoxResult.None)
-              mbr = cevaplimi ?
-                 (
-                    sl[i].Substring(sl[i].IndexOf("§") + 1).Substring(1) == MessageBoxResult.Cancel.ToString() ? MessageBoxResult.Cancel
-                  : sl[i].Substring(sl[i].IndexOf("§") + 1).Substring(1) == MessageBoxResult.No.ToString() ? MessageBoxResult.No
-                  : sl[i].Substring(sl[i].IndexOf("§") + 1).Substring(1) == MessageBoxResult.OK.ToString() ? MessageBoxResult.OK
-                  : sl[i].Substring(sl[i].IndexOf("§") + 1).Substring(1) == MessageBoxResult.Yes.ToString() ? MessageBoxResult.Yes
-                  : MessageBoxResult.None
-                )
-                : MessageBox.Show(sl[i].OrtasiniGetir(":", "§"), "", mbb, MessageBoxImage.Question);
-            result = result + "¶Q:" + sl[i].OrtasiniGetir(":", "§") + "§-" + mbr.ToString(); // (ör: soru1§cevap1¶soru2§cevap2)
-            rtn = rtn || !cevaplimi;
-          }
-          else if (sl[i].StartsWith("E:")) // Error
-          {
-            Add2Log(sl[i]);
-            MessageBox.Show(sl[i].Substring(sl[i].IndexOf(":") + 1), "", MessageBoxButton.OK, MessageBoxImage.Error);
-            result = null;
-          }
-        }
-      }
-      //else rtn = false;
-      return rtn;
-    }
-    public static bool CheckForInternetConnection()
-    {
-      try
-      {
-        using (var client = new WebClient())
-        {
-          using (var stream = client.OpenRead("http://www.google.com"))
-          {
-            return true;
-          }
-        }
-      }
-      catch
-      {
-        return false;
-      }
-    }
-    private void Login()
-    {
-      RuninThread(new DoWorkEventHandler(thrLogin), null); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); HideWait(); }
-    }
-
-    private void thrLogin(object sender, DoWorkEventArgs e)
-    {
-      Quota = 0;
-      if (!SetSecurityCode()) return;
-      Add2Log("SecurityCode : " + SecurityCode);
-      String _tmp = WSRunner("/Login?Evidence=" + (EmailHash + (SecurityCode + (EmailHash + Password).HashMD5() + ("").HashMD5()).HashMD5()));
-      //      String _tmp = Runner(() => WCF.Login(Email.HashMD5() + (SecurityCode + (Email.HashMD5() + Password).HashMD5() + ("").HashMD5()).HashMD5(), langCode, AFQ));
-      if (_tmp == null) return;
-      //if (CheckResult(ref _tmp)) return;
-      if ((_tmp.Length > 33) && (_tmp.Substring(32, 1) == ";"))
-      {
-        Quota = long.Parse(_tmp.Substring(33));
-        SecurityCode = _tmp.Substring(0, 32);
-        Logged = true;
-        if (cb_AutoConnect == true)
-          Connect();
-        RememberAction();
-      }
-    }
-
-    public void RememberAction(object sender = null)
-    {
-      CheckBox cb = null;
-      if (sender != null) cb = (CheckBox)sender;
-      if ((cb == null) || (cb.Name == "cb_PEmailRemember"))
-      {
-        if ((cb_PEmailRememberIsChecked == true) && (Logged))
-          Registry.CurrentUser.CreateSubKey(_projectregaddr).SetValue("PEmailRemember", saes.EncryptToString(Email));
-        else if (cb_PEmailRememberIsChecked == false) Registry.CurrentUser.CreateSubKey(_projectregaddr).SetValue("PEmailRemember", "");
-      }
-      if ((sender == null) || (cb.Name == "cb_PPassRemember"))
-      {
-        if ((cb_PPassRememberIsChecked == true) && (Logged))
-          Registry.CurrentUser.CreateSubKey(_projectregaddr).SetValue("PPassRemember", saes.EncryptToString(Password));
-        else if (cb_PPassRememberIsChecked == false) Registry.CurrentUser.CreateSubKey(_projectregaddr).SetValue("PPassRemember", "");
-      }
-      if ((sender != null) && ((cb.Name == "cb_AutoLogin") || (cb.Name == "cb_AutoConnect")))
-        Registry.CurrentUser.CreateSubKey(_projectregaddr).SetValue(((CheckBox)sender).Name.Substring(3), (((CheckBox)sender).IsChecked == true ? "*" : ""));
-    }
-    public void Logout()
-    {
-      Logged = false;
-      Disconnect();
-    }
 
     private void LoginCommand()
     {
-      if (Logged)
-        Logout();
+      if (!Account.Logged)
+        RuninThread(
+          delegate (object sender, DoWorkEventArgs e)
+          {
+            ShowWait();
+            Account.Login();
+          },
+          //new DoWorkEventHandler(Account.Login),
+          delegate (object sender, RunWorkerCompletedEventArgs e)
+          {
+            OnPropertyChanged(nameof(canConnect));
+            if ((Account.cb_AutoConnect == true) && (canConnect))
+              Connect();
+            HideWait();
+          }
+          ); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); HideWait(); }
       else
-        Login();
+        RuninThread(
+          delegate (object sender, DoWorkEventArgs e)
+          {
+            ShowWait();
+            Account.Logout();
+          },
+          //new DoWorkEventHandler(Account.Login),
+          delegate (object sender, RunWorkerCompletedEventArgs e)
+          {
+            Disconnect();
+            OnPropertyChanged(nameof(canConnect));
+            HideWait();
+          }
+          ); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); HideWait(); }
+
     }
 
     private void ConnectCommand(object obj)
@@ -1022,6 +943,6 @@ namespace WifiProvider
     {
       StopSystem();
     }
-
+    #endregion
   }
 }

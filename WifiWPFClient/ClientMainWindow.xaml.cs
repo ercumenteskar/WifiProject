@@ -35,7 +35,7 @@ namespace WifiWPFClient
   {
     private const string _projectName = "Wifi";
     private const string _projectregaddr = "Software\\" + _projectName;
-    string wifiprefix = "wifi";
+    string wifiprefix = "";
     string providerIp = "";
     //private string Password = "e";
     private string SecurityCode = "";
@@ -235,6 +235,7 @@ namespace WifiWPFClient
 
     private bool Login()
     {
+      //MessageBox.Show("");
       bool rtn = Logged;
       if (!rtn)
       {
@@ -262,6 +263,7 @@ namespace WifiWPFClient
             Quota = tmplong;
             _loginquota = tmplong;
             SecurityCode = result.Substring(0, 32);
+            Logged = true;
             rtn = true;
           }
           else
@@ -534,7 +536,7 @@ namespace WifiWPFClient
 
     private string GetWebstring(string Url)
     {
-      Add2Log("GetWebstring(" + Url + ")");
+      //Add2Log("GetWebstring(" + Url + ")");
       string AFQ = null;
       WebClient wc = new WebClient();
       try
