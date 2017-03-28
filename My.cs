@@ -196,7 +196,12 @@ namespace My
       //try {connstr = ConfigurationManager.ConnectionStrings[ConnectionName + "ConnectionString"].ConnectionString;}
       //catch (Exception) {} 
       if (connstr == null) // From Test Unit
-        connstr = "Server=.; Database=Wifi; uid=sa; pwd=e;pooling=true; connection lifetime=10; connection timeout=0; packet size=1024;";
+      {
+        if (HttpContext.Current.Server.MachineName=="BILGISAYAR")
+          connstr = "Server=.; Database=Wifi; uid=sa; pwd=e;pooling=true; connection lifetime=10; connection timeout=0; packet size=1024;";
+        else
+          connstr = "Server=.; Database=Wifi; uid=sa; pwd=Erci1572;pooling=true; connection lifetime=10; connection timeout=0; packet size=1024;";
+      }
       return new SqlConnection(connstr); // ConfigurationManager.ConnectionStrings[ConnectionName + "ConnectionString"].ConnectionString
       //"Server=" + DBServer + "; Database=" + DBDatabase + "; uid=" + DBUsername + "; " + "pwd=" + DBPassword + ";pooling=true; connection lifetime=10; connection timeout=0; packet size=1024;"
     }
