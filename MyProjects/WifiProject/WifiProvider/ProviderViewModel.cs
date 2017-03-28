@@ -14,7 +14,7 @@ using PacketDotNet;
 using System.Globalization;
 using System.ServiceProcess;
 
-namespace WifiProvider
+namespace WifiSolution.WifiProvider
 {
   public class ProviderViewModel : INotifyPropertyChanged
   {
@@ -113,8 +113,6 @@ namespace WifiProvider
     }
     #endregion
     #region Commands
-
-
     private RelayCommand _bt_LoginCommand;
     public RelayCommand bt_LoginCommand
     {
@@ -151,7 +149,7 @@ namespace WifiProvider
     public string bt_ConnectContent { get { return Connected ? "Disconnect" : "Connect"; } }
     #endregion
     #region Globals
-    public WifiCommon wc;
+    private WifiCommon wc;
     //public WifiAccount Account;
     private WifiAccount account;
     public WifiAccount Account
@@ -178,93 +176,6 @@ namespace WifiProvider
     Thread thrGetSetUsage;
     #endregion
     #region Properties
-    /*
-    private int _tc_RegisterLoginSelectedIndex = 1;
-    public int tc_RegisterLoginSelectedIndex { get { return _tc_RegisterLoginSelectedIndex; } set { _tc_RegisterLoginSelectedIndex = value; OnPropertyChanged(nameof(tc_RegisterLoginSelectedIndex)); } }
-    private bool? _Account.cb_PEmailRememberIsChecked = false;
-    public bool? Account.cb_PEmailRememberIsChecked { get { return _Account.cb_PEmailRememberIsChecked; } set { _Account.cb_PEmailRememberIsChecked = value; RememberAction(value == true, "PEmailRemember"); OnPropertyChanged(nameof(Account.cb_PEmailRememberIsChecked)); } }
-    private bool? _Account.cb_PPassRememberIsChecked = false;
-    public bool? Account.cb_PPassRememberIsChecked { get { return _Account.cb_PPassRememberIsChecked; } set { _Account.cb_PPassRememberIsChecked = value; RememberAction(value == true, "PPassRemember"); OnPropertyChanged(nameof(Account.cb_PPassRememberIsChecked)); } }
-    private bool? _cb_AutoLogin = false;
-    public bool? cb_AutoLogin { get { return _cb_AutoLogin; } set { _cb_AutoLogin = value; RememberAction(value == true, "AutoLogin"); OnPropertyChanged(nameof(cb_AutoLogin)); } }
-    private bool? _cb_AutoConnect = false;
-    public bool? cb_AutoConnect { get { return _cb_AutoConnect; } set { _cb_AutoConnect = value; RememberAction(value == true, "AutoConnect"); OnPropertyChanged(nameof(cb_AutoConnect)); } }
-    private String Account.Password = "";
-    public String Account.Password { get { return Account.Password; } set { Account.Password = value; OnPropertyChanged(nameof(Account.Password)); OnPropertyChanged(nameof(canLogin)); } }
-    private String _email="";
-    public String Account.Email
-    {
-      get { return _email; }
-      set { _email = value; OnPropertyChanged(nameof(Account.Email)); OnPropertyChanged(nameof(canLogin)); }
-    }
-    public String Account.EmailHash { get { return Account.Email.ToLower().HashMD5(); } }
-    private String _Account.RegisterEmail = "";
-    public String Account.RegisterEmail
-    {
-      get { return _Account.RegisterEmail; }
-      set { _Account.RegisterEmail = value; OnPropertyChanged(nameof(Account.RegisterEmail)); }
-    }
-    private String _Account.RegisterPassword1 = "";
-    public String Account.RegisterPassword1
-    {
-      get { return _Account.RegisterPassword1; }
-      set { _Account.RegisterPassword1 = value; OnPropertyChanged(nameof(Account.RegisterPassword1)); }
-    }
-    private String _Account.RegisterPassword2 = "";
-    public String Account.RegisterPassword2
-    {
-      get { return _Account.RegisterPassword2; }
-      set { _Account.RegisterPassword2 = value; OnPropertyChanged(nameof(Account.RegisterPassword2)); }
-    }
-    private bool _Account.Connected = false;
-    public bool Account.Connected
-    {
-      get { return _Account.Connected; }
-      set
-      {
-        _Account.Connected = value;
-        OnPropertyChanged(nameof(bt_ConnectContent));
-        OnPropertyChanged(nameof(canConnect));
-      }
-    }
-    public string bt_ConnectContent { get { return Account.Connected ? "Disconnect" : "Connect"; } }
-    public string bt_LoginContent
-    {
-      get { return Account.Logged ? "Logout" : "Login"; }
-    }
-    private bool _Account.Logged = false;
-    public bool Account.Logged
-    {
-      get { return _Account.Logged; }
-      set
-      {
-        _Account.Logged = value;
-        OnPropertyChanged(nameof(tb_EmailIsEnabled));
-        OnPropertyChanged(nameof(tb_PasswordIsEnabled));
-        OnPropertyChanged(nameof(bt_LoginContent));
-        OnPropertyChanged(nameof(canConnect));
-        if (!value) Quota = 0;
-      }
-    }
-    public bool? tb_PasswordIsEnabled { get { return !Account.Logged; } } // set { _tb_PasswordIsEnabled = value; OnPropertyChanged(nameof(tb_PasswordIsEnabled)); } 
-    public bool? tb_EmailIsEnabled { get { return !Account.Logged; } } // set { _tb_EmailIsEnabled = value; OnPropertyChanged(nameof(tb_EmailIsEnabled)); } 
-    private long quota = 0;
-    public long Quota { get { return quota < 0 ? 0 : quota; } set { quota = value; OnPropertyChanged(nameof(QuotaStr)); } }
-    public string QuotaStr
-    {
-      get
-      {
-        if (Quota < 1)
-          return "0";
-        else if (Quota < 1024)
-          return Quota.ToString("#,##0 B");
-        else if (Quota < 1024 * 1024)
-          return (Quota / 1024).ToString("#,##0 KB");
-        else
-          return (Quota / (1024 * 1024)).ToString("###,###,###,###,##0 MB");
-      }
-    }
-    */
     private int waitcount = 0;
     private int Waitcount { get { return waitcount; } set { waitcount = value; OnPropertyChanged(nameof(MainGridVisibility)); } }
     public bool MainGridVisibility { get { return Waitcount == 0; } } //  ? Visibility.Visible : Visibility.Hidden; 
@@ -582,10 +493,11 @@ namespace WifiProvider
       String url = request.Url.ToString();
       String command = "";
       String _temp = "";
-      if ((url.Contains("/")) && (url.Contains("?")) && (url.IndexOf("/") < url.IndexOf("?")))
-        command = url.ReverseString().OrtasiniGetir("?", "/").ReverseString();
-      else if (url.Contains("/"))
-        command = url.Split('/').Last();
+      command = url.GetUrlParam("Command");
+      //if ((url.Contains("/")) && (url.Contains("?")) && (url.IndexOf("/") < url.IndexOf("?")))
+      //  command = url.ReverseString().OrtasiniGetir("?", "/").ReverseString();
+      //else if (url.Contains("/"))
+      //  command = url.Split('/').Last();
       if (command == "ping")
       {
         return "pong";
@@ -600,16 +512,19 @@ namespace WifiProvider
       Client _client = clients.Find(x => x.Mac == reqmac);
       if (_client == null)
         _client = clients[0];
-        //return "null";
+      //return "null";
       if (command == "Remove")
       {
         String Email = url.GetUrlParam("Email");
-        wc.WCF.Remove(Email);
+        wc.GetWebstring("/" + command + "?" + url.Substring(url.IndexOf("&")+1));
+        //wc.WCF.Remove(Email);
         return "<a href='Register?Email='>Register</a>";
       }
       else if (command == "Register")
       {
-        _temp = wc.WCF.Register(url.GetUrlParam("Email"), url.GetUrlParam("Pass"), url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
+        _temp = wc.GetWebstring("/" + command + "?" + url.Substring(url.IndexOf("&") + 1));
+        //wc.GetWebstring(url);
+        //wc.WCF.Register(url.GetUrlParam("Email"), url.GetUrlParam("Pass"), url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
         if (mfn.isValidHexString(_temp, 32))
           _client.SecurityCode = _temp;
         return _temp;
@@ -617,7 +532,9 @@ namespace WifiProvider
       else if (command == "GetSecurityCode")
       {
         String _EmailHash = url.GetUrlParam("EmailHash");
-        _temp = wc.WCF.GetSecurityCode(_EmailHash, url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
+        _temp = wc.GetWebstring("/" + command + "?" + url.Substring(url.IndexOf("&") + 1));
+        //wc.GetWebstring(url);
+        //wc.WCF.GetSecurityCode(_EmailHash, url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
         if (mfn.isValidHexString(_temp, 32))
         {
           _client.EmailHash = _EmailHash;
@@ -631,7 +548,9 @@ namespace WifiProvider
       }
       else if (command == "Login")
       {
-        _temp = wc.WCF.Login(url.GetUrlParam("Evidence"), url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
+        _temp = wc.GetWebstring("/" + command + "?" + url.Substring(url.IndexOf("&") + 1));
+        //wc.GetWebstring(url);
+        //wc.WCF.Login(url.GetUrlParam("Evidence"), url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
         long qt = 0;
         if ((_temp.Length >= 34) && mfn.isValidHexString(_temp.Substring(0, 32)) && (_temp[32] == ';') && (long.TryParse(_temp.Substring(33), out qt)))//        if (_temp.Length >= 34)
         {
@@ -649,7 +568,9 @@ namespace WifiProvider
         if (_client.Quota == 0) return "¶E:" + dict.GetMessage(18);
         String ClientEvidence = url.GetUrlParam("ClientEvidence");
         _temp = Account.myEvidence();
-        _temp = wc.WCF.ConnectUS(ClientEvidence, _temp, url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
+        _temp = wc.GetWebstring("/" + command + "?" + url.Substring(url.IndexOf("&") + 1));
+        //wc.GetWebstring(url);
+        //wc.WCF.ConnectUS(ClientEvidence, _temp, url.GetUrlParam("AFQ"), url.GetUrlParam("LangCode"));
         long qt;
         if ((_temp.Length >= 67) &&
           mfn.isValidHexString(_temp.Substring(0, 32)) && (_temp[64] == ';') &&
@@ -708,7 +629,9 @@ namespace WifiProvider
           //long amount = _temp.Substring(64);
           //if (amount > _client.Quota) amount = _client.Quota;// imza, gelen amount değerine göre, o yüzden değiştiremem...
           //Add2Log("Gelen amount : " + amount.ToString("###,###,###") + " _temp:" + _temp);
-          _temp = wc.WCF.SetUsage(_temp, Account.myEvidence(amount.ToString()), long.Parse(_client.ConnectionID), url.GetUrlParam("AFQ"), langCode);
+          _temp = wc.GetWebstring("/" + command + "?" + url.Substring(url.IndexOf("&") + 1));
+          //wc.GetWebstring(url);
+          //wc.WCF.SetUsage(_temp, Account.myEvidence(amount.ToString()), long.Parse(_client.ConnectionID), url.GetUrlParam("AFQ"), langCode);
           if (((_client.Usage > amount * 1.001) && (_client.Usage > amount + 1024 * 1024)) || (amount >= _client.Quota)) // 1/1000 den fazla fark varsa ve bu fark 1MB ı aşmışsa...
             return "¶E:Kotanız bittiği için bağlantınız sonlandırıldı.";
 
@@ -819,7 +742,7 @@ namespace WifiProvider
     }
     private void Add2Log(string msg)
     {
-      Console.WriteLine(msg);
+      Console.WriteLine(DateTime.Now.ToShortTimeString() + ": " + msg);
     }
     private String Netsh(String args)
     {

@@ -121,10 +121,4 @@
   <data name="Dict" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Dict.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
-  <data name="LoginEmail" xml:space="preserve">
-    <value>E-Posta : </value>
-  </data>
-  <data name="LoginPass" xml:space="preserve">
-    <value>Parola : </value>
-  </data>
 </root>

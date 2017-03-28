@@ -1,3 +1,8 @@
+C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\App.baml
+C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\ProviderMainWindow.g.cs
+C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\App.g.cs
+C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider_MarkupCompile.cache
+C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider_MarkupCompile.lref
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\bin\Debug\WifiProvider.exe.config
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\bin\Debug\WifiProvider.exe
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\bin\Debug\WifiProvider.pdb
@@ -7,16 +12,10 @@ C:\VSProjects\MyProjects\WifiProject\WifiProvider\bin\Debug\Ionic.Zip.dll
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\bin\Debug\PacketDotNet.dll
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\bin\Debug\SharpPcap.dll
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\bin\Debug\System.Windows.Interactivity.dll
-C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.csprojResolveAssemblyReference.cache
-C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\ProviderMainWindow.g.cs
-C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\App.g.cs
-C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider_MarkupCompile.cache
-C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider_MarkupCompile.lref
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\ProviderMainWindow.baml
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.g.resources
-C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.Properties.Resources.resources
+C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiSolution.WifiProvider.Properties.Resources.resources
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.csproj.GenerateResource.Cache
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.exe
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.pdb
-C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\App.baml
-C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\GeneratedInternalTypeHelper.g.cs
+C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.csprojResolveAssemblyReference.cache

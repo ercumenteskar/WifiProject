@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace WifiProvider.Properties {
+namespace WifiSolution.WifiProvider.Properties {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace WifiProvider.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("WifiProvider.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("WifiSolution.WifiProvider.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -75,24 +75,6 @@ namespace WifiProvider.Properties {
         internal static string Dict {
             get {
                 return ResourceManager.GetString("Dict", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to E-Posta : .
-        /// </summary>
-        internal static string LoginEmail {
-            get {
-                return ResourceManager.GetString("LoginEmail", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Parola : .
-        /// </summary>
-        internal static string LoginPass {
-            get {
-                return ResourceManager.GetString("LoginPass", resourceCulture);
             }
         }
     }

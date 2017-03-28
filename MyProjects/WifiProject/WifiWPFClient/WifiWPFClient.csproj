@@ -74,15 +74,19 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="RelayCommand.cs" />
-    <Compile Include="Service References\WifiService\Reference.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Reference.svcmap</DependentUpon>
+    <Compile Include="..\RelayCommand.cs">
+      <Link>RelayCommand.cs</Link>
     </Compile>
-    <Compile Include="WifiAccount.cs" />
-    <Compile Include="WifiCommon.cs" />
-    <Compile Include="WinFuncs.cs" />
+    <Compile Include="..\WifiAccount.cs">
+      <Link>WifiAccount.cs</Link>
+    </Compile>
+    <Compile Include="..\WifiCommon.cs">
+      <Link>WifiCommon.cs</Link>
+    </Compile>
+    <Compile Include="..\WinFuncs.cs">
+      <Link>WinFuncs.cs</Link>
+    </Compile>
+    <Compile Include="ClientViewModel.cs" />
     <Page Include="ClientMainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -123,13 +127,6 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <AppDesigner Include="Properties\" />
-    <None Include="Service References\WifiService\Service11.wsdl" />
-    <None Include="Service References\WifiService\Service12.xsd">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Service References\WifiService\Service13.xsd">
-      <SubType>Designer</SubType>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -138,25 +135,7 @@
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
-    <WCFMetadataStorage Include="Service References\WifiService\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Service References\WifiService\configuration91.svcinfo" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Service References\WifiService\configuration.svcinfo" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Service References\WifiService\Reference.svcmap">
-      <Generator>WCF Proxy Generator</Generator>
-      <LastGenOutput>Reference.cs</LastGenOutput>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\Dict.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Service References\WifiService\Service11.disco" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

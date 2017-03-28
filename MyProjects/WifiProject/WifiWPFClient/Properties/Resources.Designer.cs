@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace WifiWPFClient.Properties {
+namespace WifiSolution.WifiWPFClient.Properties {
     using System;
     
     
