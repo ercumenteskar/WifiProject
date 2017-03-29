@@ -1,24 +1,42 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using My;
+using System.Globalization;
 
 namespace WifiSolution
 {
   public class WifiAccount : INotifyPropertyChanged
   {
-    private WinFuncs wf;
-    private WifiCommon wc;
+    public WinFuncs wf;
+    public WifiCommon wc;
     private MyDictionary dict;
-    public WifiAccount(String type, String projectName, MyDictionary dictionary)
+    public WifiAccount(String type, String projectName, String resource_data)
     {
       Type = type;
-      dict = dictionary;
+      dict = new MyDictionary(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, resource_data.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries));
       wf = new WinFuncs(projectName);
-      wc = new WifiCommon(dictionary, projectName);
+      wc = new WifiCommon(dict, projectName);
+      if (wf.ReadFromRegistry(Type + "EmailRemember").ToString() != "")
+        Email = saes.DecryptToString(wf.ReadFromRegistry(Type + "EmailRemember").ToString());
+      if (wf.ReadFromRegistry(Type + "PassRemember").ToString() != "")
+        Password = saes.DecryptToString(wf.ReadFromRegistry(Type + "PassRemember").ToString());
+      if (Email != "") cb_EmailRememberIsChecked = true;
+      if (Password != "") cb_PassRememberIsChecked = true;
+      cb_AutoLogin = (wf.ReadFromRegistry(Type + "AutoLogin").ToString() == "*");
+      cb_AutoConnect = (wf.ReadFromRegistry(Type + "AutoConnect").ToString() == "*");
+
+      if (!mfn.IsAdministrator())
+      {
+        wf.ShowMessageBox(dict.GetMessage(10));
+        wf.Shutdown();
+      }
+      if ((Email != "") || (Password != ""))
+      {
+        tc_RegisterLoginSelectedIndex = 0;
+        if ((Email != "") && (Password != "") && (cb_AutoLogin == true) && (!Logged))
+          Login();
+      }
+
     }
     public String ProviderIp = "";
     private String Type = "";
@@ -93,7 +111,8 @@ namespace WifiSolution
         result = wc.GetWebstring("/Register?Email=" + RegisterEmail + "&Pass=" + RegisterPassword1, ProviderIp);
       //wc.WSRunner("/Register?Email=" + RegisterEmail + "&Pass=" + RegisterPassword1);
       //if (result == null) return;
-      if (!wc.CheckResult(ref result)) return;
+      //if (!wc.CheckResult(ref result)) return;
+      if (!mfn.isValidHexString(result, 32)) return;
       wf.ShowMessageBox(dict.GetMessage(7));
       tc_RegisterLoginSelectedIndex = 0;
       Email = RegisterEmail;
@@ -119,7 +138,8 @@ namespace WifiSolution
       {
         _tmp = wc.GetWebstring("/SendResetPasswordCode?EmailHash=" + EmailHash, ProviderIp);
         //wc.WSRunner("/SendResetPasswordCode?EmailHash=" + EmailHash);
-        if (!wc.CheckResult(ref _tmp)) return;
+        //if (!wc.CheckResult(ref result)) return;
+        if (!mfn.isValidHexString(_tmp, 32)) return;
       }
       else wf.ShowMessageBox(dict.GetMessage(8));
     }
@@ -171,7 +191,7 @@ namespace WifiSolution
       if (value == "")
       {
         if (((cbName == "AutoLogin") || (cbName == "AutoConnect")))
-          wf.WriteToRegistry(cbName, IsChecked ? "*" : "");
+          wf.WriteToRegistry(Type + cbName, IsChecked ? "*" : "");
       }
       else
       {
@@ -185,8 +205,9 @@ namespace WifiSolution
     {
       SecurityCode = wc.GetWebstring("/GetSecurityCode?EmailHash=" + EmailHash, ProviderIp);
       //wc.WSRunner("/GetSecurityCode?EmailHash=" + EmailHash);
-      if (SecurityCode == null) return false;
-      return !wc.CheckResult(ref SecurityCode);
+      //if (!wc.CheckResult(ref result)) return;
+      return mfn.isValidHexString(SecurityCode, 32);
+      //return !wc.CheckResult(ref SecurityCode);
     }
 
     public void Login()
@@ -195,9 +216,6 @@ namespace WifiSolution
       if (!SetSecurityCode()) return;
       Console.WriteLine("SecurityCode : " + SecurityCode);
       String _tmp = wc.GetWebstring("/Login?Evidence=" + (EmailHash + (SecurityCode + (EmailHash + Password).HashMD5() + ("").HashMD5()).HashMD5()), ProviderIp);
-      if (!wc.CheckResult(ref _tmp)) return;
-      //Buffer SATIRLARIN BAŞINA ! koydum ama Hata olunca da hatasız olunca da false dönüyor. Tüm if li checkresult kontrollerini değiştirmem gerekebilir...
-
       if ((_tmp.Length > 33) && (_tmp.Substring(32, 1) == ";"))
       {
         Quota = long.Parse(_tmp.Substring(33));

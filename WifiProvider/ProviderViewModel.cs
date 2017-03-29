@@ -18,34 +18,14 @@ namespace WifiSolution.WifiProvider
 {
   public class ProviderViewModel : INotifyPropertyChanged
   {
+    private WinFuncs wf;
+    private WifiCommon wc;
     #region Constructor&Destructor
     public ProviderViewModel()
     {
-      String resource_data = Properties.Resources.Dict;
-      String[] rows = resource_data.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-      dict = new MyDictionary(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, rows);
-      account = new WifiAccount("P", ProjectName, dict);
-      if (wf.ReadFromRegistry("PEmailRemember").ToString() != "")
-        Account.Email = saes.DecryptToString(wf.ReadFromRegistry("PEmailRemember").ToString());
-      if (wf.ReadFromRegistry("PPassRemember").ToString() != "")
-        Account.Password = saes.DecryptToString(wf.ReadFromRegistry("PPassRemember").ToString());
-      if (Account.Email != "") Account.cb_EmailRememberIsChecked = true;
-      if (Account.Password != "") Account.cb_PassRememberIsChecked = true;
-      Account.cb_AutoLogin = (wf.ReadFromRegistry("AutoLogin").ToString() == "*");
-      Account.cb_AutoConnect = (wf.ReadFromRegistry("AutoConnect").ToString() == "*");
-
-      if (!mfn.IsAdministrator())
-      {
-        wf.ShowMessageBox(dict.GetMessage(10));
-        wf.Shutdown();
-      }
-      if ((Account.Email != "") || (Account.Password != ""))
-      {
-        Account.tc_RegisterLoginSelectedIndex = 0;
-        if ((Account.Email != "") && (Account.Password != "") && (Account.cb_AutoLogin == true))
-          LoginCommand();
-      }
-      wc = new WifiCommon(dict, ProjectName);
+      account = new WifiAccount("P", ProjectName, Properties.Resources.Dict);
+      wc = account.wc;// new WifiCommon(dict, ProjectName);
+      wf = account.wf;// new WifiCommon(dict, ProjectName);
     }
 
     #endregion
@@ -149,8 +129,6 @@ namespace WifiSolution.WifiProvider
     public string bt_ConnectContent { get { return Connected ? "Disconnect" : "Connect"; } }
     #endregion
     #region Globals
-    private WifiCommon wc;
-    //public WifiAccount Account;
     private WifiAccount account;
     public WifiAccount Account
     {
@@ -160,7 +138,6 @@ namespace WifiSolution.WifiProvider
 
     public event PropertyChangedEventHandler PropertyChanged;
     private void OnPropertyChanged(String property) { PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property)); }
-    private WinFuncs wf = new WinFuncs(ProjectName);
     private DnsServer dnsServer;
     private ICaptureDevice device;
     public List<Client> clients = new List<Client>();
@@ -822,7 +799,6 @@ namespace WifiSolution.WifiProvider
           //new DoWorkEventHandler(Account.Login),
           delegate (object sender, RunWorkerCompletedEventArgs e)
           {
-            OnPropertyChanged(nameof(canConnect));
             if ((Account.cb_AutoConnect == true) && (canConnect))
               Connect();
             HideWait();
