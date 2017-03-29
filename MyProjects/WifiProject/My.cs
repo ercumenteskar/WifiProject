@@ -106,7 +106,7 @@ namespace My
         ds.Dispose();
         rdr.Dispose();
         cmd.Dispose();
-        conn.Dispose();
+        conn?.Dispose();
       }
     }
     public static DataSet SelectToDS(string Sql, List<SqlParameter> Params = null, string ConnectionName = "")

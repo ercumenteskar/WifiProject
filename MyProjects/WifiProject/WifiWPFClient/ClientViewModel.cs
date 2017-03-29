@@ -16,43 +16,22 @@ namespace WifiSolution.WifiWPFClient
 {
   public class ClientViewModel : INotifyPropertyChanged
   {
+    private const string ProjectName = "Wifi";
+    string wifiprefix = "";
+    private WinFuncs wf;// = new WinFuncs(ProjectName);
+    private WifiCommon wc;
     public ClientViewModel()
     {
-      String resource_data = Properties.Resources.Dict;
-      String[] rows = resource_data.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-      dict = new MyDictionary(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, rows);
-      account = new WifiAccount("P", ProjectName, dict);
-      if (wf.ReadFromRegistry("CEmailRemember").ToString() != "")
-        Account.Email = saes.DecryptToString(wf.ReadFromRegistry("CEmailRemember").ToString());
-      if (wf.ReadFromRegistry("CPassRemember").ToString() != "")
-        Account.Password = saes.DecryptToString(wf.ReadFromRegistry("CPassRemember").ToString());
-      if (Account.Email != "") Account.cb_EmailRememberIsChecked = true;
-      if (Account.Password != "") Account.cb_PassRememberIsChecked = true;
-      Account.cb_AutoLogin = (wf.ReadFromRegistry("AutoLogin").ToString() == "*");
-      Account.cb_AutoConnect = (wf.ReadFromRegistry("AutoConnect").ToString() == "*");
-
-      if (!mfn.IsAdministrator())
-      {
-        wf.ShowMessageBox(dict.GetMessage(10));
-        wf.Shutdown();
-      }
-      if ((Account.Email != "") || (Account.Password != ""))
-      {
-        Account.tc_RegisterLoginSelectedIndex = 0;
-        if ((Account.Email != "") && (Account.Password != "") && (Account.cb_AutoLogin == true))
-          LoginCommand();
-      }
-      wc = new WifiCommon(dict, ProjectName);
+      account = new WifiAccount("C", ProjectName, Properties.Resources.Dict);
+      wc = account.wc;// new WifiCommon(dict, ProjectName);
+      wf = account.wf;// new WifiCommon(dict, ProjectName);
     }
     private WifiAccount account;
     public WifiAccount Account
     {
       get { return account; }
-      //set { account = value; }
     }
     SimpleAES saes = new SimpleAES();
-    private WinFuncs wf = new WinFuncs(ProjectName);
-    private WifiCommon wc;
     #region Properties
     private int waitcount = 0;
     private int Waitcount { get { return waitcount; } set { waitcount = value; OnPropertyChanged(nameof(MainGridVisibility)); } }
@@ -168,8 +147,6 @@ namespace WifiSolution.WifiWPFClient
     public string bt_ConnectContent { get { return Connected ? "Disconnect" : "Connect"; } }
     #endregion
 
-    private const string ProjectName = "Wifi";
-    string wifiprefix = "";
     private String providerIp = "";
     public String ProviderIp { get { return providerIp; } set { providerIp = value; Account.ProviderIp = providerIp; } }
     private WlanClient.WlanInterface wlanIface = (new WlanClient()).Interfaces[0];
@@ -415,9 +392,9 @@ namespace WifiSolution.WifiWPFClient
         //Add2Log(_loginquota.ToString("###,###,##0") + " - " + _receivedBytes.ToString("###,###,##0") + " = " + Quota.ToString("###,###,##0"));
         string result = wc.GetWebstring("http://" + ProviderIp + "/SetUsage?Message=" + Account.Email.HashMD5() + (Account.SecurityCode + (Account.Email.HashMD5() + Account.Password).HashMD5() + (_receivedBytes.ToString()).HashMD5()).HashMD5() + _receivedBytes.ToString());
         //Add2Log(result == null ? "null" : result);
-        if (!wc.CheckResult(ref result)) return;
-        if (result.Length == 32)
-          Account.SecurityCode = result;
+        //if (!wc.CheckResult(ref result)) return;
+        if (!mfn.isValidHexString(result, 32)) return;
+        Account.SecurityCode = result;
         if (Account.Quota == 0)
         {
           Disconnect();
@@ -461,7 +438,6 @@ namespace WifiSolution.WifiWPFClient
       if (Connected) return true; // AutoConnect seçili ise Login() içinden connect olmuş olabilir. 
       bool rtn = false;
       string result = wc.GetWebstring("http://" + ProviderIp + "/ConnectUS?ClientEvidence=" + myEvidence());
-      if (!wc.CheckResult(ref result)) return rtn;
       long tmplong = 0;
       if ((result.Length > 33) && (result.Substring(32, 1) == ";") && (mfn.isValidHexString(result.Substring(0, 32))) && (long.TryParse(result.Substring(33), out tmplong)))
       {

@@ -8,7 +8,7 @@ using System.Windows;
 
 namespace WifiSolution
 {
-  class WinFuncs
+  public class WinFuncs
   {
     private String ProjectName = "";
     private String RegistryPath = "";
