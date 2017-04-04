@@ -2,48 +2,56 @@
 using System.ComponentModel;
 using My;
 using System.Globalization;
+using NetFwTypeLib;
+using System.Linq;
+using System.Threading;
+using System.Collections.Generic;
 
 namespace WifiSolution
 {
   public class WifiAccount : INotifyPropertyChanged
   {
-    public WinFuncs wf;
-    public WifiCommon wc;
+    private WinFuncs wf;
+    private WifiCommon wc;
     private MyDictionary dict;
-    public WifiAccount(String type, String projectName, String resource_data)
+    public WifiAccount(String atype, String projectName, String resource_data, WifiCommon _wc, WinFuncs _wf)
     {
-      Type = type;
+      AType = atype;
       dict = new MyDictionary(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, resource_data.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries));
-      wf = new WinFuncs(projectName);
-      wc = new WifiCommon(dict, projectName);
-      if (wf.ReadFromRegistry(Type + "EmailRemember").ToString() != "")
-        Email = saes.DecryptToString(wf.ReadFromRegistry(Type + "EmailRemember").ToString());
-      if (wf.ReadFromRegistry(Type + "PassRemember").ToString() != "")
-        Password = saes.DecryptToString(wf.ReadFromRegistry(Type + "PassRemember").ToString());
-      if (Email != "") cb_EmailRememberIsChecked = true;
-      if (Password != "") cb_PassRememberIsChecked = true;
-      cb_AutoLogin = (wf.ReadFromRegistry(Type + "AutoLogin").ToString() == "*");
-      cb_AutoConnect = (wf.ReadFromRegistry(Type + "AutoConnect").ToString() == "*");
-
+      wf = _wf; wf.ProjectName = projectName;
+      wc = _wc; wc.ProjectName = projectName; wc.dict = dict; wc.wf = _wf;
+      if (wf.ReadFromRegistry(AType + "EmailRemember").ToString() != "")
+        Email = saes.DecryptToString(wf.ReadFromRegistry(AType + "EmailRemember").ToString());
+      if (wf.ReadFromRegistry(AType + "PassRemember").ToString() != "")
+        Password = saes.DecryptToString(wf.ReadFromRegistry(AType + "PassRemember").ToString());
+      if (Email != "") EmailRememberIsChecked = true;
+      if (Password != "") PassRememberIsChecked = true;
+      AutoLogin = (wf.ReadFromRegistry(AType + "AutoLogin").ToString() == "*");
+      AutoConnect = (wf.ReadFromRegistry(AType + "AutoConnect").ToString() == "*");
       if (!mfn.IsAdministrator())
       {
         wf.ShowMessageBox(dict.GetMessage(10));
         wf.Shutdown();
       }
+      //FirewallAyarla();
       if ((Email != "") || (Password != ""))
       {
         tc_RegisterLoginSelectedIndex = 0;
-        if ((Email != "") && (Password != "") && (cb_AutoLogin == true) && (!Logged))
+        if ((Email != "") && (Password != "") && (AutoLogin == true) && (!Logged))
           Login();
       }
-
     }
+    ~WifiAccount()
+    {
+    }
+
+    String defaultfwbackupfilename = AppDomain.CurrentDomain.BaseDirectory + "DefaultFirewallPolicies.wfw";
+    String ourfwbackupfilename = AppDomain.CurrentDomain.BaseDirectory + "ActiveFirewallPolicies.wfw";
     public String ProviderIp = "";
-    private String Type = "";
+    private String AType = "";
     SimpleAES saes = new SimpleAES();
     public event PropertyChangedEventHandler PropertyChanged;
     private void OnPropertyChanged(String property) { PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property)); }
-
     public String SecurityCode = "";
     private int _tc_RegisterLoginSelectedIndex = 1;
     public int tc_RegisterLoginSelectedIndex
@@ -51,14 +59,14 @@ namespace WifiSolution
       get { return _tc_RegisterLoginSelectedIndex; }
       set { _tc_RegisterLoginSelectedIndex = value; OnPropertyChanged(nameof(tc_RegisterLoginSelectedIndex)); }
     }
-    private bool? _cb_EmailRememberIsChecked = false;
-    public bool? cb_EmailRememberIsChecked { get { return _cb_EmailRememberIsChecked; } set { _cb_EmailRememberIsChecked = value; RememberAction(value == true, Type + "EmailRemember"); OnPropertyChanged(nameof(cb_EmailRememberIsChecked)); } }
-    private bool? _cb_PassRememberIsChecked = false;
-    public bool? cb_PassRememberIsChecked { get { return _cb_PassRememberIsChecked; } set { _cb_PassRememberIsChecked = value; RememberAction(value == true, Type + "PassRemember"); OnPropertyChanged(nameof(cb_PassRememberIsChecked)); } }
-    private bool? _cb_AutoLogin = false;
-    public bool? cb_AutoLogin { get { return _cb_AutoLogin; } set { _cb_AutoLogin = value; RememberAction(value == true, "AutoLogin"); OnPropertyChanged(nameof(cb_AutoLogin)); } }
-    private bool? _cb_AutoConnect = false;
-    public bool? cb_AutoConnect { get { return _cb_AutoConnect; } set { _cb_AutoConnect = value; RememberAction(value == true, "AutoConnect"); OnPropertyChanged(nameof(cb_AutoConnect)); } }
+    private bool? _EmailRememberIsChecked = false;
+    public bool? EmailRememberIsChecked { get { return _EmailRememberIsChecked; } set { _EmailRememberIsChecked = value; RememberAction(value == true, AType + "EmailRemember"); OnPropertyChanged(nameof(EmailRememberIsChecked)); } }
+    private bool? _PassRememberIsChecked = false;
+    public bool? PassRememberIsChecked { get { return _PassRememberIsChecked; } set { _PassRememberIsChecked = value; RememberAction(value == true, AType + "PassRemember"); OnPropertyChanged(nameof(PassRememberIsChecked)); } }
+    private bool? _AutoLogin = false;
+    public bool? AutoLogin { get { return _AutoLogin; } set { _AutoLogin = value; RememberAction(value == true, AType + "AutoLogin"); OnPropertyChanged(nameof(AutoLogin)); } }
+    private bool? _AutoConnect = false;
+    public bool? AutoConnect { get { return _AutoConnect; } set { _AutoConnect = value; RememberAction(value == true, AType + "AutoConnect"); OnPropertyChanged(nameof(AutoConnect)); } }
     private String password = "";
     public String Password { get { return password; } set { password = value; OnPropertyChanged(nameof(Password)); OnPropertyChanged(nameof(canLogin)); } }
     private String _email = "";
@@ -98,6 +106,7 @@ namespace WifiSolution
         return _bt_RegisterCommand;
       }
     }
+
     private void RegisterCommand()
     {
       string result = null;
@@ -183,22 +192,12 @@ namespace WifiSolution
 
     public void RememberAction(bool IsChecked = false, String cbName = null)
     {
-      String value = "";
-      if (cbName.Contains("EmailRemember")) value = saes.EncryptToString(Email);
-      else if (cbName.Contains("PassRemember")) value = saes.EncryptToString(Password);
-      //if (cbName == "PEmailRemember") value = saes.EncryptToString(Email);
-      //else if (cbName == "PPassRemember") value = saes.EncryptToString(Password);
-      if (value == "")
-      {
-        if (((cbName == "AutoLogin") || (cbName == "AutoConnect")))
-          wf.WriteToRegistry(Type + cbName, IsChecked ? "*" : "");
-      }
-      else
-      {
-        if ((IsChecked) && (Logged)) wf.WriteToRegistry(cbName, value);
-        else if (IsChecked) wf.WriteToRegistry(cbName, "");
-      }
-
+      if ((cbName.Contains("AutoLogin")) || (cbName.Contains("AutoConnect")))
+        wf.WriteToRegistry(cbName, IsChecked ? "*" : "");
+      else if (cbName.Contains("EmailRemember"))
+        wf.WriteToRegistry(cbName, IsChecked ? saes.EncryptToString(Email) : "");
+      else if (cbName.Contains("PassRemember"))
+        wf.WriteToRegistry(cbName, IsChecked ? saes.EncryptToString(Password) : "");
     }
 
     public bool SetSecurityCode()
@@ -221,10 +220,10 @@ namespace WifiSolution
         Quota = long.Parse(_tmp.Substring(33));
         SecurityCode = _tmp.Substring(0, 32);
         Logged = true;
-        if (cb_EmailRememberIsChecked == true)
-          RememberAction(true, Type + "EmailRemember");
-        if (cb_PassRememberIsChecked == true)
-          RememberAction(true, Type + "PassRemember");
+        if (EmailRememberIsChecked == true)
+          RememberAction(true, AType + "EmailRemember");
+        if (PassRememberIsChecked == true)
+          RememberAction(true, AType + "PassRemember");
       }
     }
 
@@ -242,5 +241,50 @@ namespace WifiSolution
         return EmailHash + (SecurityCode + (EmailHash + Password).HashMD5() + Mesaj.HashMD5()).HashMD5() + Mesaj;
     }
 
+    private void FirewallAyarla(bool Acilis = true)
+    {
+      //if (Acilis)
+      //{
+      //  if (!System.IO.File.Exists(defaultfwbackupfilename))
+      //    wf.Netsh("advfirewall export \"" + defaultfwbackupfilename + "\"");
+
+      //  bool FirewallEnabled = (wf.ReadFromRegistry("EnableFirewall", "M", @"System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\PublicProfile").ToString() == "1");
+      //  if (!FirewallEnabled)
+      //    wf.Netsh("advfirewall set publicprofile state on");
+      //  //wf.Netsh("advfirewall reset"); reset tüm profillerde firewall u açıyor...
+      //  INetFwServices svc = (Activator.CreateInstance(Type.GetTypeFromCLSID(new Guid("{304CE942-6E39-40D8-943A-B913C40C9CD4}"))) as INetFwMgr).LocalPolicy.CurrentProfile.Services;
+      //  /*
+      //  String strfap = svc.Cast<INetFwService>()?.FirstOrDefault(sc => sc.Type == NET_FW_SERVICE_TYPE_.NET_FW_SERVICE_FILE_AND_PRINT)?.Name;
+      //  String strrdp = svc.Cast<INetFwService>()?.FirstOrDefault(sc => sc.Type == NET_FW_SERVICE_TYPE_.NET_FW_SERVICE_REMOTE_DESKTOP)?.Name;
+      //  String strmax = svc.Cast<INetFwService>()?.FirstOrDefault(sc => sc.Type == NET_FW_SERVICE_TYPE_.NET_FW_SERVICE_TYPE_MAX)?.Name;
+      //  String strpnp = svc.Cast<INetFwService>()?.FirstOrDefault(sc => sc.Type == NET_FW_SERVICE_TYPE_.NET_FW_SERVICE_UPNP)?.Name;
+      //  */
+      //  INetFwPolicy2 fwPolicy = (INetFwPolicy2)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwPolicy2"));
+      //  List<INetFwRule> RuleList = new List<INetFwRule>();
+      //  foreach (INetFwRule rule in fwPolicy.Rules)
+      //    if ((rule.Enabled) && (rule.Profiles == 7))
+      //      if (rule.Name.ToLower().StartsWith("file and printer sharing") || rule.Name.ToLower().StartsWith("remote desktop") || rule.Name.ToLower().StartsWith("network discovery") || rule.Name.ToLower().StartsWith("remote assistance"))
+      //      wf.Netsh("advfirewall firewall set rule name=\"" + rule.Name + "\" new enable=No profile=public");
+      //  /*
+      //  wf.Netsh("advfirewall firewall set rule group=" + strfap + " new enable=No profile=public");
+      //  wf.Netsh("advfirewall firewall set rule group=" + strrdp + " new enable=No profile=public");
+      //  wf.Netsh("advfirewall firewall set rule group=" + strmax + " new enable=No profile=public");
+      //  wf.Netsh("advfirewall firewall set rule group=" + strpnp + " new enable=No profile=public");
+      //  */
+      //  if (System.IO.File.Exists(ourfwbackupfilename))
+      //    wf.Netsh("advfirewall import \"" + ourfwbackupfilename + "\"");
+      //}
+      //else
+      //{
+      //  if (System.IO.File.Exists(ourfwbackupfilename))
+      //    System.IO.File.Delete(ourfwbackupfilename);
+      //  wf.Netsh("advfirewall export \"" + ourfwbackupfilename + "\"");
+      //  if (System.IO.File.Exists(defaultfwbackupfilename))
+      //  { 
+      //    wf.Netsh("advfirewall import \"" + defaultfwbackupfilename + "\"");
+      //    wf.CmdExec("del", "/Q \"" + defaultfwbackupfilename + "\"");
+      //  }
+      //}
+    }
   }
 }

@@ -18,12 +18,12 @@
                         <Button x:Name="bt_Login" Content="{Binding Account.bt_LoginContent}" IsEnabled="{Binding Account.canLogin}" Command="{Binding bt_LoginCommand}"  HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Margin="96,64,0,0" Height="22" />
                         <Label x:Name="l_defQuota" Content="Kota : " HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,91,0,0"/>
                         <Label x:Name="l_Quota" Content="{Binding Account.QuotaStr}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="96,91,0,0" Width="120" Height="26"/>
-                        <CheckBox x:Name="cb_PEmailRemember" IsChecked="{Binding Account.cb_EmailRememberIsChecked}" Content="Hatırla" HorizontalAlignment="Left" Margin="223,13,0,0" VerticalAlignment="Top" Width="88"/>
-                        <CheckBox x:Name="cb_PPassRemember" IsChecked="{Binding Account.cb_PassRememberIsChecked}" Content="Hatırla" HorizontalAlignment="Left" Margin="223,40,0,0" VerticalAlignment="Top" Width="88"/>
+                        <CheckBox x:Name="cb_PEmailRemember" IsChecked="{Binding Account.EmailRememberIsChecked}" Content="Hatırla" HorizontalAlignment="Left" Margin="223,13,0,0" VerticalAlignment="Top" Width="88"/>
+                        <CheckBox x:Name="cb_PPassRemember" IsChecked="{Binding Account.PassRememberIsChecked}" Content="Hatırla" HorizontalAlignment="Left" Margin="223,40,0,0" VerticalAlignment="Top" Width="88"/>
                         <Button x:Name="bt_Forgot" Command="{Binding Account.bt_ForgotCommand}" HorizontalAlignment="Left" VerticalAlignment="Top" Width="88" Margin="223,64,0,0" Content="Forgot?" Height="22" />
                         <Button x:Name="bt_Connect" Content="{Binding bt_ConnectContent}" IsEnabled="{Binding canConnect}" Command="{Binding bt_ConnectCommand}" HorizontalAlignment="Left" VerticalAlignment="Top" Width="88" Margin="223,132,0,0" Height="22"/>
-                        <CheckBox x:Name="cb_AutoLogin" IsChecked="{Binding Account.cb_AutoLogin}" Content="Otomatik giriş" HorizontalAlignment="Left" Margin="221,91,0,0" VerticalAlignment="Top" Width="90"/>
-                        <CheckBox x:Name="cb_AutoConnect" IsChecked="{Binding Account.cb_AutoConnect}" Content="Otomatik bağlan" HorizontalAlignment="Left" Margin="221,111,0,0" VerticalAlignment="Top" Width="90"/>
+                        <CheckBox x:Name="cb_AutoLogin" IsChecked="{Binding Account.AutoLogin}" Content="Otomatik giriş" HorizontalAlignment="Left" Margin="221,91,0,0" VerticalAlignment="Top" Width="90"/>
+                        <CheckBox x:Name="cb_AutoConnect" IsChecked="{Binding Account.AutoConnect}" Content="Otomatik bağlan" HorizontalAlignment="Left" Margin="221,111,0,0" VerticalAlignment="Top" Width="90"/>
                     </Grid>
                 </TabItem>
                 <TabItem x:Name="ti_Register" Header="Kayıt">

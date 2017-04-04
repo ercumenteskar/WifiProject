@@ -23,12 +23,37 @@ namespace WifiSolution.WifiProvider
     #region Constructor&Destructor
     public ProviderViewModel()
     {
-      account = new WifiAccount("P", ProjectName, Properties.Resources.Dict);
-      wc = account.wc;// new WifiCommon(dict, ProjectName);
-      wf = account.wf;// new WifiCommon(dict, ProjectName);
+    }
+
+    public void AfterCtor(WifiCommon _wc, WinFuncs _wf)
+    {
+      wc = _wc;
+      wf = _wf;
+      account = new WifiAccount("P", ProjectName, Properties.Resources.Dict, wc, wf);
+      if (canConnect && (account.AutoConnect == true))
+        Connect();
     }
 
     #endregion
+    private int waitcount = 0;
+    public int Waitcount
+    {
+      get { return waitcount; }
+      set
+      {
+        waitcount = value;
+        OnPropertyChanged(nameof(MainGridVisibility));
+      }
+    }
+
+    public bool MainGridVisibility
+    {
+      get
+      {
+        return Waitcount == 0;
+      }
+    } //  ? Visibility.Visible : Visibility.Hidden; 
+
     #region Classes
     public class Client
     {
@@ -152,204 +177,199 @@ namespace WifiSolution.WifiProvider
     SimpleAES saes = new SimpleAES();
     Thread thrGetSetUsage;
     #endregion
-    #region Properties
-    private int waitcount = 0;
-    private int Waitcount { get { return waitcount; } set { waitcount = value; OnPropertyChanged(nameof(MainGridVisibility)); } }
-    public bool MainGridVisibility { get { return Waitcount == 0; } } //  ? Visibility.Visible : Visibility.Hidden; 
-    #endregion
     #region Methods
-    private void RuninThread(DoWorkEventHandler work, RunWorkerCompletedEventHandler afterThat)
-    {
-      ShowWait();
-      AutoResetEvent _resetEvent = new AutoResetEvent(false);
-      BackgroundWorker bw = new BackgroundWorker();
-      bw.DoWork += work;
-      if (afterThat != null)
-        bw.RunWorkerCompleted += afterThat;// delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); HideWait(); };
-      bw.RunWorkerCompleted += delegate (object sender, RunWorkerCompletedEventArgs e) { HideWait(); };
-      bw.RunWorkerAsync();
-    }
     public void StartSystem(bool stopFirst = true) //  = true
     {
       if (stopFirst)
-        RuninThread(new DoWorkEventHandler(thrStopSystem), delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); }); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); HideWait(); }
+        wc.RuninThread(new DoWorkEventHandler(thrStopSystem), delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); }); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); Account.Waitcount--; }
       else
-        RuninThread(new DoWorkEventHandler(thrStartSystem), null); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); HideWait(); }
+        wc.RuninThread(new DoWorkEventHandler(thrStartSystem), null); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); Account.Waitcount--; }
     }
     private void StopSystem()
     {
-      RuninThread(new DoWorkEventHandler(thrStopSystem), null); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); HideWait(); }
+      wc.RuninThread(new DoWorkEventHandler(thrStopSystem), delegate (object sender, RunWorkerCompletedEventArgs e) { OnPropertyChanged(nameof(canConnect)); } ); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); Account.Waitcount--; }
     }
     private void thrStartSystem(object sender, DoWorkEventArgs e)
     {
-      String source = "";
-      String hotspot = "";
-      if (!Account.Logged)
-        return;
-      if (wdhndl != IntPtr.Zero)
-        WinDivertMethods.WinDivertClose(wdhndl);
-      List<NetworkInterface> nicx = new List<NetworkInterface>();
-      foreach (var nic in IcsManager.GetAllIPv4Interfaces())
-        if ((nic.OperationalStatus == OperationalStatus.Up && nic.NetworkInterfaceType != NetworkInterfaceType.Tunnel && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback))
-          nicx.Add(nic);
-      if (nicx.Count > 1)
-      {
-        wf.ShowMessageBox("Paylaşılabilecek birden fazla internet kaynağı bulundu. Lütfen kontrol edip programı tekrar deneyin.");
-        wf.Shutdown();
-      }
-      else if (nicx.Count == 1)
-        source = nicx[0].Id;
-      else
-      {
-        wf.ShowMessageBox("İnternet kaynağı bulunamadı. Lütfen kontrol edip programı tekrar deneyin.");
-        wf.Shutdown();
-      }
-      Netsh("wlan set hostednetwork mode=allow ssid=wifix key=erci1234"); //  key=ercierci
-      Add2Log("Hotspot Created");
-      nicx.Clear();
-      foreach (var nic in IcsManager.GetAllIPv4Interfaces())
-        if ((nic.Description.Contains("Virtual") && nic.Id != source && nic.NetworkInterfaceType != NetworkInterfaceType.Tunnel && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback))
-          nicx.Add(nic);
-      if (nicx.Count > 1)
-      {
-        wf.ShowMessageBox("Barındırılmış Ağ seçilemedi. Bilgisayarınızda birden fazla sanal wifi sürücüsü görünüyor.");
-        wf.Shutdown();
-      }
-      else if (nicx.Count == 1)
-        hotspot = nicx[0].Id;
-      else
-      {
-        wf.ShowMessageBox("Paylaşım için gerekli sürücüler bulunamadı. Lütfen kontrol edip programı tekrar çalıştırın.");
-        wf.Shutdown();
-      }
-      EnableICS(source, hotspot, true);
-      Add2Log("Internet Connection Sharing Enabled");
-      Netsh("wlan start hostednetwork");
-      Add2Log("HotSpot Opened");
-
-      if ((thrGetSetUsage != null) && (thrGetSetUsage.IsAlive))
-        thrGetSetUsage.Abort();
-      thrGetSetUsage = new Thread(new ThreadStart(GetSetUsage));
-      thrGetSetUsage.IsBackground = true;
-      thrGetSetUsage.Start();
-      Add2Log("GetSetUsage thread started!");
-
-      #region DNS SERVER
-      dnsServer = new DnsServer(IPAddress.Any, 10, 10);
-      dnsServer.QueryReceived += OnQueryReceived;
-      //dnsServer.ClientAccount.Connected += OnClientAccount.Connected;
+      Waitcount++;
       try
       {
-        dnsServer.Start();
-      }
-      catch (Exception ex)
-      {
-        if (ex is System.Net.Sockets.SocketException)
+        String source = "";
+        String hotspot = "";
+        if (!Account.Logged)
+          return;
+        if (wdhndl != IntPtr.Zero)
+          WinDivertMethods.WinDivertClose(wdhndl);
+        List<NetworkInterface> nicx = new List<NetworkInterface>();
+        foreach (var nic in IcsManager.GetAllIPv4Interfaces())
+          if ((nic.OperationalStatus == OperationalStatus.Up && nic.NetworkInterfaceType != NetworkInterfaceType.Tunnel && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback))
+            nicx.Add(nic);
+        if (nicx.Count > 1)
         {
-          ServiceController service = new ServiceController("Dnscache");
-          try
-          {
-            int millisec1 = Environment.TickCount;
-            TimeSpan timeout = TimeSpan.FromMilliseconds(5000);
-
-            service.Stop();
-            service.WaitForStatus(ServiceControllerStatus.Stopped, timeout);
-
-            // count the rest of the timeout
-            int millisec2 = Environment.TickCount;
-            timeout = TimeSpan.FromMilliseconds(5000 - (millisec2 - millisec1));
-
-            service.Start();
-            service.WaitForStatus(ServiceControllerStatus.Running, timeout);
-          }
-          catch
-          {
-            throw;
-          }
-          wf.ShowMessageBox("Dns Server açılamadı: SocketException");
+          wf.ShowMessageBox(dict.GetMessage(19));
+          wf.Shutdown();
         }
-        else throw;
+        else if (nicx.Count == 1)
+          source = nicx[0].Id;
+        else
+        {
+          wf.ShowMessageBox(dict.GetMessage(20));
+          wf.Shutdown();
+        }
+        wf.Netsh("wlan set hostednetwork mode=allow ssid=wifix key=erci1234"); //  key=ercierci
+        Add2Log("Hotspot Created");
+        nicx.Clear();
+        foreach (var nic in IcsManager.GetAllIPv4Interfaces())
+          if ((nic.Description.Contains("Virtual") && nic.Id != source && nic.NetworkInterfaceType != NetworkInterfaceType.Tunnel && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback))
+            nicx.Add(nic);
+        if (nicx.Count > 1)
+        {
+          wf.ShowMessageBox(dict.GetMessage(21));
+          wf.Shutdown();
+        }
+        else if (nicx.Count == 1)
+          hotspot = nicx[0].Id;
+        else
+        {
+          wf.ShowMessageBox(dict.GetMessage(22));
+          wf.Shutdown();
+        }
+        EnableICS(source, hotspot, true);
+        Add2Log("Internet Connection Sharing Enabled");
+        wf.Netsh("wlan start hostednetwork");
+        Add2Log("HotSpot Opened");
+
+        if ((thrGetSetUsage != null) && (thrGetSetUsage.IsAlive))
+          thrGetSetUsage.Abort();
+        thrGetSetUsage = new Thread(new ThreadStart(GetSetUsage));
+        thrGetSetUsage.IsBackground = true;
+        thrGetSetUsage.Start();
+        Add2Log("GetSetUsage thread started!");
+
+        #region DNS SERVER
+        dnsServer = new DnsServer(IPAddress.Any, 10, 10);
+        dnsServer.QueryReceived += OnQueryReceived;
+        //dnsServer.ClientAccount.Connected += OnClientAccount.Connected;
+        try
+        {
+          dnsServer.Start();
+        }
+        catch (Exception ex)
+        {
+          if (ex is System.Net.Sockets.SocketException)
+          {
+            ServiceController service = new ServiceController("Dnscache");
+            try
+            {
+              int millisec1 = Environment.TickCount;
+              TimeSpan timeout = TimeSpan.FromMilliseconds(5000);
+
+              service.Stop();
+              service.WaitForStatus(ServiceControllerStatus.Stopped, timeout);
+
+              // count the rest of the timeout
+              int millisec2 = Environment.TickCount;
+              timeout = TimeSpan.FromMilliseconds(5000 - (millisec2 - millisec1));
+
+              service.Start();
+              service.WaitForStatus(ServiceControllerStatus.Running, timeout);
+            }
+            catch
+            {
+              throw;
+            }
+            wf.ShowMessageBox(dict.GetMessage(23));
+          }
+          else throw;
+        }
+        Add2Log("DNS Server running");
+        #endregion
+        //device4Arp = (SharpPcap.LibPcap.LibPcapLiveDevice)CaptureDeviceList.Instance.FirstOrDefault(x => x.Name.Contains(hotspot));
+        #region Capture Device // start olmadan önce capture başlarsa capture çalışmıyor...
+        //CaptureDeviceList.Instance.Refresh();
+        device = CaptureDeviceList.Instance.FirstOrDefault(x => x.Name.Contains(hotspot));// devices[devices.Count - 1];
+        var v = ((SharpPcap.WinPcap.WinPcapDevice)device).Addresses.First(x => x.Addr.ipAddress.ToString().Contains("."));
+        if (v != null)
+          providerIp = v.Addr.ipAddress.ToString(); // Anlamadığım bir sebepten dolayı bazen 0.0.0.0 geliyor. Ya da 192.168.0.1 // Ostoto kurup kaldırınca böyle oldu...
+        else
+        {
+          wf.ShowMessageBox(dict.GetMessage(24));
+          wf.Shutdown();
+        }
+        //if (!providerIp.Contains(".")) 
+        //  providerIp = GetValue(device.ToString().Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries)[8], "Addr:      ");
+        //if (!providerIp.Contains("."))
+        //  providerIp = "192.168.137.1";
+        device.OnPacketArrival += new SharpPcap.PacketArrivalEventHandler(device_OnPacketArrival);
+        device.Open(DeviceMode.Normal, 1000); //DeviceMode.Promiscuous
+        device.StartCapture();
+        Add2Log("Device Listening");
+        #endregion
+        #region WEB SERVER
+        //MyWebServer create etmeden önce beklemezsem hata veriyor (Denetim Masası/Ağ ve Paylaşım Merkezi/HotSpot un erişim türü İnternet olduktan sonra MyWebServer hatasız create oluyor. Burada algılamayı bulamadım, şimdilik 2 sn bekliyorum.
+        //Henüz 192.168.137.1 ip adresini alamadığı için hata veriyor. Bunu kontrol edip ip aldıktan sonra devam edersen 4 saniyeden az beklersin, hem de hata almaman garanti olur.
+        //device.
+        //Thread.Sleep(4000);
+        /*
+        Thread _thrwsRun = new Thread(new ThreadStart(wsRun));
+        _thrwsRun.IsBackground = true;
+        _thrwsRun.Start();
+        */
+        Ping pingSender = new Ping();
+        //IPAddress address = IPAddress.Loopback;
+        PingReply reply = pingSender.Send(providerIp, 10);
+        while (reply.Status != IPStatus.Success) reply = pingSender.Send(providerIp, 10);
+        ws = new MyWebServer(SendResponse, "http://" + providerIp + ":80/");
+        ws.Run();
+        wsStarted = true;
+        Add2Log("WEB Server running : http://" + providerIp + ":80/");
+        string pib = providerIp.Substring(0, providerIp.LastIndexOf('.') + 1);
+        string filter = "ip.SrcAddr>=" + pib + "1 and ip.SrcAddr<=" + pib + "255 and ip.DstAddr>=" + pib + "1 and ip.DstAddr<=" + pib + "255";
+        //wdhndl = WinDivertMethods.WinDivertOpen(filter, WINDIVERT_LAYER.WINDIVERT_LAYER_NETWORK, 1, WinDivertConstants.WINDIVERT_FLAG_DROP);
+        Connected = true;
+        //gp = IcsManager.FindConnectionByIdOrName(hotspot);
+        //device = CaptureDeviceList.Instance.FirstOrDefault(x => x.Name.Contains(hotspot));// devices[devices.Count - 1];
+        //sss = device.ToString();
+        #endregion
       }
-      Add2Log("DNS Server running");
-      #endregion
-      //device4Arp = (SharpPcap.LibPcap.LibPcapLiveDevice)CaptureDeviceList.Instance.FirstOrDefault(x => x.Name.Contains(hotspot));
-      #region Capture Device // start olmadan önce capture başlarsa capture çalışmıyor...
-      //CaptureDeviceList.Instance.Refresh();
-      device = CaptureDeviceList.Instance.FirstOrDefault(x => x.Name.Contains(hotspot));// devices[devices.Count - 1];
-      var v = ((SharpPcap.WinPcap.WinPcapDevice)device).Addresses.First(x => x.Addr.ipAddress.ToString().Contains("."));
-      if (v != null)
-        providerIp = v.Addr.ipAddress.ToString(); // Anlamadığım bir sebepten dolayı bazen 0.0.0.0 geliyor. Ya da 192.168.0.1 // Ostoto kurup kaldırınca böyle oldu...
-      else
+      finally
       {
-        wf.ShowMessageBox("ProviderIp alınamadı");
-        wf.Shutdown();
+        Waitcount--;
       }
-      //if (!providerIp.Contains(".")) 
-      //  providerIp = GetValue(device.ToString().Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries)[8], "Addr:      ");
-      //if (!providerIp.Contains("."))
-      //  providerIp = "192.168.137.1";
-      device.OnPacketArrival += new SharpPcap.PacketArrivalEventHandler(device_OnPacketArrival);
-      device.Open(DeviceMode.Normal, 1000); //DeviceMode.Promiscuous
-      device.StartCapture();
-      Add2Log("Device Listening");
-      #endregion
-      #region WEB SERVER
-      //MyWebServer create etmeden önce beklemezsem hata veriyor (Denetim Masası/Ağ ve Paylaşım Merkezi/HotSpot un erişim türü İnternet olduktan sonra MyWebServer hatasız create oluyor. Burada algılamayı bulamadım, şimdilik 2 sn bekliyorum.
-      //Henüz 192.168.137.1 ip adresini alamadığı için hata veriyor. Bunu kontrol edip ip aldıktan sonra devam edersen 4 saniyeden az beklersin, hem de hata almaman garanti olur.
-      //device.
-      //Thread.Sleep(4000);
-      /*
-      Thread _thrwsRun = new Thread(new ThreadStart(wsRun));
-      _thrwsRun.IsBackground = true;
-      _thrwsRun.Start();
-      */
-      Ping pingSender = new Ping();
-      //IPAddress address = IPAddress.Loopback;
-      PingReply reply = pingSender.Send(providerIp, 10);
-      while (reply.Status != IPStatus.Success) reply = pingSender.Send(providerIp, 10);
-      ws = new MyWebServer(SendResponse, "http://" + providerIp + ":80/");
-      ws.Run();
-      wsStarted = true;
-      Add2Log("WEB Server running : http://" + providerIp + ":80/");
-      Connected = true;
-      //gp = IcsManager.FindConnectionByIdOrName(hotspot);
-      //device = CaptureDeviceList.Instance.FirstOrDefault(x => x.Name.Contains(hotspot));// devices[devices.Count - 1];
-      //sss = device.ToString();
-      #endregion
     }
     private void thrStopSystem(object sender, DoWorkEventArgs e)
     {
-      Netsh("wlan stop hostednetwork");
-      DisableICS();
-      Netsh("wlan set hostednetwork mode=disallow"); //  key=ercierci
-                                                     //      Netsh("wlan set hostednetwork mode=allow ssid=wifix key=erci1234"); //  key=ercierci
-      if ((device != null) && (device.Started))
+      try
       {
-        device.StopCapture();
-        device.Close();
-      }
-      if ((ws != null) && (wsStarted))
-      {
-        ws.Stop();
-        wsStarted = false;
-      }
-      if (dnsServer != null)
-        try { dnsServer.Stop(); } catch (Exception) { }
+        Waitcount++;
+        wf.Netsh("wlan stop hostednetwork");
+        DisableICS();
+        wf.Netsh("wlan set hostednetwork mode=disallow"); //  key=ercierci
+                                                          //      Netsh("wlan set hostednetwork mode=allow ssid=wifix key=erci1234"); //  key=ercierci
+        if ((device != null) && (device.Started))
+        {
+          device.StopCapture();
+          device.Close();
+        }
+        if ((ws != null) && (wsStarted))
+        {
+          ws.Stop();
+          wsStarted = false;
+        }
+        if (dnsServer != null)
+          try { dnsServer.Stop(); } catch (Exception) { }
 
-      if (wdhndl != IntPtr.Zero)
-        WinDivertMethods.WinDivertClose(wdhndl);
-      if ((thrGetSetUsage != null) && (thrGetSetUsage.IsAlive))
-        thrGetSetUsage.Abort();
-      Connected = false;
-      Add2Log("Sistem kapatıldı.");
-    }
-    public void ShowWait()
-    {
-      Waitcount++;
-    }
-    public void HideWait()
-    {
-      Waitcount--;
+        if (wdhndl != IntPtr.Zero)
+          WinDivertMethods.WinDivertClose(wdhndl);
+        if ((thrGetSetUsage != null) && (thrGetSetUsage.IsAlive))
+          thrGetSetUsage.Abort();
+        Connected = false;
+        Add2Log("Sistem kapatıldı.");
+      }
+      finally
+      {
+        Waitcount--;
+      }
     }
     async Task OnQueryReceived(object sender, QueryReceivedEventArgs e)
     {
@@ -488,12 +508,12 @@ namespace WifiSolution.WifiProvider
         reqmac = GetMacAddress(RemoteIp); //null döndüğü için patlıyor....
       Client _client = clients.Find(x => x.Mac == reqmac);
       if (_client == null)
-        _client = clients[0];
+        return "";// _client = clients[0];
       //return "null";
       if (command == "Remove")
       {
         String Email = url.GetUrlParam("Email");
-        wc.GetWebstring("/" + command + "?" + url.Substring(url.IndexOf("&")+1));
+        wc.GetWebstring("/" + command + "?" + url.Substring(url.IndexOf("&") + 1));
         //wc.WCF.Remove(Email);
         return "<a href='Register?Email='>Register</a>";
       }
@@ -721,25 +741,6 @@ namespace WifiSolution.WifiProvider
     {
       Console.WriteLine(DateTime.Now.ToShortTimeString() + ": " + msg);
     }
-    private String Netsh(String args)
-    {
-      return CmdExec("netsh.exe", args);
-    }
-    private String CmdExec(String app, String args)
-    {
-      using (Process p1 = new Process())
-      {
-        p1.StartInfo.FileName = app;
-        p1.StartInfo.Arguments = args;
-        p1.StartInfo.UseShellExecute = false;
-        p1.StartInfo.RedirectStandardOutput = true;
-        p1.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-        p1.StartInfo.CreateNoWindow = true;
-        p1.StartInfo.Verb = "runas";
-        p1.Start();
-        return p1.StandardOutput.ReadToEnd();
-      }
-    }
     void EnableICS(string shared, string home, bool force)
     {
       var connectionToShare = IcsManager.FindConnectionByIdOrName(shared);
@@ -790,36 +791,17 @@ namespace WifiSolution.WifiProvider
     private void LoginCommand()
     {
       if (!Account.Logged)
-        RuninThread(
-          delegate (object sender, DoWorkEventArgs e)
-          {
-            ShowWait();
-            Account.Login();
-          },
+        wc.RuninThread(
+          delegate (object sender, DoWorkEventArgs e) { Account.Login(); },
           //new DoWorkEventHandler(Account.Login),
-          delegate (object sender, RunWorkerCompletedEventArgs e)
-          {
-            if ((Account.cb_AutoConnect == true) && (canConnect))
-              Connect();
-            HideWait();
-          }
-          ); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); HideWait(); }
+          delegate (object sender, RunWorkerCompletedEventArgs e) { if ((Account.AutoConnect == true) && (Account.Logged) && (!Connected)) Connect(); }
+        ); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); Account.Waitcount--; }
       else
-        RuninThread(
-          delegate (object sender, DoWorkEventArgs e)
-          {
-            ShowWait();
-            Account.Logout();
-          },
+        wc.RuninThread(
+          delegate (object sender, DoWorkEventArgs e) { Account.Logout(); },
           //new DoWorkEventHandler(Account.Login),
-          delegate (object sender, RunWorkerCompletedEventArgs e)
-          {
-            Disconnect();
-            OnPropertyChanged(nameof(canConnect));
-            HideWait();
-          }
-          ); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); HideWait(); }
-
+          delegate (object sender, RunWorkerCompletedEventArgs e) { Disconnect(); }
+        ); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); Account.Waitcount--; }
     }
 
     private void ConnectCommand(object obj)

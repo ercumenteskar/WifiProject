@@ -214,8 +214,11 @@ namespace My
     {
       if (Param == ".")
         return Url.ReverseString().OrtasiniGetir("?", "/").ReverseString();
-      else
+      else if (Url.Contains("?"))
         return HttpUtility.ParseQueryString(Url.Substring(Url.IndexOf("?")))[Param];
+      else
+        return "";
+
     }
 
     public static string ReverseString(this string s)

@@ -17,3 +17,5 @@ C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiSolution.WifiPro
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.csproj.GenerateResource.Cache
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.exe
 C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.pdb
+C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\Interop.NetFwTypeLib.dll
+C:\VSProjects\MyProjects\WifiProject\WifiProvider\obj\Debug\WifiProvider.csproj.ResolveComReference.cache
