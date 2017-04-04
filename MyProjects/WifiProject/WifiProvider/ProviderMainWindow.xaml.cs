@@ -5,6 +5,9 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 using System.IO;
 using System.Text;
+using NetFwTypeLib;
+using System.Linq;
+using System.ComponentModel;
 
 namespace WifiSolution.WifiProvider
 {
@@ -36,11 +39,14 @@ namespace WifiSolution.WifiProvider
     }
     public ProviderViewModel vm;
     TextBoxOutputter outputter;
+    private WifiCommon wc = new WifiCommon();
+    private WinFuncs wf = new WinFuncs();
     public MainWindow()
     {
       InitializeComponent();
       vm = new ProviderViewModel();
       DataContext = vm;
+      vm.AfterCtor(wc, wf);
       outputter = new TextBoxOutputter(tb_Log);
       Console.SetOut(outputter);
     }
@@ -90,6 +96,7 @@ namespace WifiSolution.WifiProvider
           {
             tb_Email.Focus();
           }));
+
     }
 
     public delegate void UpdateTextCallbackpassb(PasswordBox tb, string str);

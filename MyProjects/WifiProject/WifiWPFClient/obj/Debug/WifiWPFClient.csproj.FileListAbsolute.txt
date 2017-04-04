@@ -14,3 +14,8 @@ C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\obj\Debug\WifiWPFClient.pdb
 C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\bin\Debug\ManagedWifi.dll
 C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\bin\Debug\PacketDotNet.dll
 C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\bin\Debug\SharpPcap.dll
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\bin\Debug\Microsoft.WindowsAPICodePack.dll
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\bin\Debug\Microsoft.WindowsAPICodePack.xml
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\obj\Debug\Interop.NetFwTypeLib.dll
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\obj\Debug\WifiWPFClient.csproj.ResolveComReference.cache
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\obj\Debug\App.baml

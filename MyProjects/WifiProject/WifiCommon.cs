@@ -5,21 +5,24 @@ using System.Text;
 using System.Threading.Tasks;
 using My;
 using System.Net;
+using System.ComponentModel;
+using System.Threading;
 
 namespace WifiSolution
 {
   public class WifiCommon
   {
-    private MyDictionary dict;
-    private WinFuncs wf;
-    private string ProjectName;
+    public MyDictionary dict;
+    public WinFuncs wf;
+    public string ProjectName;
     private readonly string WifiServicePrefix = "http://70.35.206.36:1004/Request.aspx?Command=";
 
-    public WifiCommon(MyDictionary dictionary, String projectName)
+    public WifiCommon()// MyDictionary dictionary, String projectName)
     {
-      ProjectName = projectName;
-      dict = dictionary;
-      wf = new WinFuncs(ProjectName);
+      
+      //ProjectName = projectName;
+      //dict = dictionary;
+      //wf = new WinFuncs(ProjectName);
     }
 
     public String GetWebstring(String Url, String ProviderIp = "")
@@ -121,7 +124,16 @@ namespace WifiSolution
         return false;
       }
     }
-
+    public void RuninThread(DoWorkEventHandler work, RunWorkerCompletedEventHandler afterThat)
+    {
+      AutoResetEvent _resetEvent = new AutoResetEvent(false);
+      BackgroundWorker bw = new BackgroundWorker();
+      bw.DoWork += work;
+      if (afterThat != null)
+        bw.RunWorkerCompleted += afterThat;// delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); Account.Waitcount--; };
+      //bw.RunWorkerCompleted += delegate (object sender, RunWorkerCompletedEventArgs e) { Account.Waitcount--; };
+      bw.RunWorkerAsync();
+    }
 
   }
 }

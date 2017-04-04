@@ -1,5 +1,7 @@
-﻿using My;
+﻿using Microsoft.WindowsAPICodePack.Net;
+using My;
 using NativeWifi;
+using NetFwTypeLib;
 using PacketDotNet;
 using SharpPcap;
 using System;
@@ -17,79 +19,44 @@ namespace WifiSolution.WifiWPFClient
   public class ClientViewModel : INotifyPropertyChanged
   {
     private const string ProjectName = "Wifi";
-    string wifiprefix = "";
+    string wifiprefix = "wifix";
     private WinFuncs wf;// = new WinFuncs(ProjectName);
     private WifiCommon wc;
     public ClientViewModel()
     {
-      account = new WifiAccount("C", ProjectName, Properties.Resources.Dict);
-      wc = account.wc;// new WifiCommon(dict, ProjectName);
-      wf = account.wf;// new WifiCommon(dict, ProjectName);
     }
+
+    public void AfterCtor(WifiCommon _wc, WinFuncs _wf)
+    {
+      wc = _wc;
+      wf = _wf;
+      account = new WifiAccount("C", ProjectName, Properties.Resources.Dict, wc, wf);
+      if (canConnect && (account.AutoConnect == true))
+        Connect();
+    }
+
     private WifiAccount account;
     public WifiAccount Account
     {
       get { return account; }
     }
-    SimpleAES saes = new SimpleAES();
-    #region Properties
-    private int waitcount = 0;
-    private int Waitcount { get { return waitcount; } set { waitcount = value; OnPropertyChanged(nameof(MainGridVisibility)); } }
-    public bool MainGridVisibility { get { return Waitcount == 0; } } //  ? Visibility.Visible : Visibility.Hidden; 
-    #endregion
-    public void ShowWait()
-    {
-      Waitcount++;
-    }
-    public void HideWait()
-    {
-      Waitcount--;
-    }
 
-    private void RuninThread(DoWorkEventHandler work, RunWorkerCompletedEventHandler afterThat)
-    {
-      ShowWait();
-      AutoResetEvent _resetEvent = new AutoResetEvent(false);
-      BackgroundWorker bw = new BackgroundWorker();
-      bw.DoWork += work;
-      if (afterThat != null)
-        bw.RunWorkerCompleted += afterThat;// delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); HideWait(); };
-      bw.RunWorkerCompleted += delegate (object sender, RunWorkerCompletedEventArgs e) { HideWait(); };
-      bw.RunWorkerAsync();
-    }
+
+    SimpleAES saes = new SimpleAES();
     private void LoginCommand()
     {
       if (!Account.Logged)
-        RuninThread(
-          delegate (object sender, DoWorkEventArgs e)
-          {
-            ShowWait();
-            Account.Login();
-          },
+        wc.RuninThread(
+          delegate (object sender, DoWorkEventArgs e) { Account.Login(); },
           //new DoWorkEventHandler(Account.Login),
-          delegate (object sender, RunWorkerCompletedEventArgs e)
-          {
-            if ((Account.cb_AutoConnect == true) && (Account.Logged) && (!Connected))
-              Connect();
-            HideWait();
-          }
-          ); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); HideWait(); }
+          delegate (object sender, RunWorkerCompletedEventArgs e) { if ((Account.AutoConnect == true) && (Account.Logged) && (!Connected)) Connect(); }
+        ); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); HideWait(); }
       else
-        RuninThread(
-          delegate (object sender, DoWorkEventArgs e)
-          {
-            ShowWait();
-            Account.Logout();
-          },
+        wc.RuninThread(
+          delegate (object sender, DoWorkEventArgs e) { Account.Logout(); },
           //new DoWorkEventHandler(Account.Login),
-          delegate (object sender, RunWorkerCompletedEventArgs e)
-          {
-            Disconnect();
-            OnPropertyChanged(nameof(canConnect));
-            HideWait();
-          }
-          ); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); HideWait(); }
-
+          delegate (object sender, RunWorkerCompletedEventArgs e) { Disconnect(); }
+        ); // delegate (object sender, RunWorkerCompletedEventArgs e) { StartSystem(false); HideWait(); }
     }
     #region Commands
     private RelayCommand _bt_RefreshCommand;
@@ -157,7 +124,7 @@ namespace WifiSolution.WifiWPFClient
     public event PropertyChangedEventHandler PropertyChanged;
     private void OnPropertyChanged(string property) { PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property)); }
     List<WifiType> lb_networksItemsSource { get { return wifis.OrderByDescending(x => x.SignalQuality).ToList(); } }
-      public string bt_LoginContent { get { return Account.Logged ? "Logout" : "Login"; } }
+    public string bt_LoginContent { get { return Account.Logged ? "Logout" : "Login"; } }
     //private long _quota = 0;
     private long _loginquota = 0;
     private long _connectionid = 0;
@@ -170,19 +137,18 @@ namespace WifiSolution.WifiWPFClient
     private string langCode = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
     private ICaptureDevice device;
     private long receivedBytes = 0;
-    private MyDictionary dict;
     Thread thrGetSetUsage;
-/*
-    public WifiService.Service1Client WCF
-    {
-      get
-      {
-        if (_WCF == null)
-          _WCF = new WifiService.Service1Client();
-        return _WCF;
-      }
-    }
-*/
+    /*
+        public WifiService.Service1Client WCF
+        {
+          get
+          {
+            if (_WCF == null)
+              _WCF = new WifiService.Service1Client();
+            return _WCF;
+          }
+        }
+    */
     public class WifiType
     {
       public string SSIDName { get; set; }
@@ -285,8 +251,8 @@ namespace WifiSolution.WifiWPFClient
       //  DispatcherPriority.ContextIdle,
       //  new Action(delegate ()
       //    {
-            if ((!Account.Logged) && (Account.cb_AutoLogin == true))
-              Account.Login();
+      if ((!Account.Logged) && (Account.AutoLogin == true))
+        Account.Login();
       //    }
       //  )
       //);
@@ -419,16 +385,15 @@ namespace WifiSolution.WifiWPFClient
 
     public void Disconnect()
     {
-      if ((Connected) && CurrentWifi().StartsWith(wifiprefix) && (ConnectionID>0))
+      if ((Connected) && CurrentWifi().StartsWith(wifiprefix) && (ConnectionID > 0))
         wc.GetWebstring("http://" + ProviderIp + "/Disconnect?ConnectionID=" + ConnectionID.ToString());
       Connected = false;
       ConnectionID = 0;
       if ((thrGetSetUsage != null) && (thrGetSetUsage.IsAlive))
         thrGetSetUsage.Abort();
-
       if ((device != null) && (device.Started))
         device.StopCapture();
-      Add2Log(dict.GetMessage(12));
+      Add2Log(wc.dict.GetMessage(12));
     }
 
     private bool Connect()
@@ -445,6 +410,8 @@ namespace WifiSolution.WifiWPFClient
         ConnectionID = tmplong;
         Add2Log("Bağlantı sağlandı. ConnectionID : " + ConnectionID.ToString());
         Connected = true;
+        Network connectedwifi = NetworkListManager.GetNetworks(NetworkConnectivityLevels.Connected).FirstOrDefault(nt => nt.Description == CurrentWifi());
+        if (connectedwifi != null) connectedwifi.Category = NetworkCategory.Public;
         if (!device.Started)
           device.StartCapture();
         if (thrGetSetUsage.IsAlive)
@@ -458,14 +425,5 @@ namespace WifiSolution.WifiWPFClient
         Add2Log("Bağlantı sağlanamadı. (" + result + ")");
       return rtn;
     }
-
-    /*
-              string wfname = CurrentWifi();
-              if (wfname.StartsWith(wifiprefix))// && (!isSysConnected()))
-                wifiAfterConnect(wfname);
-              wlanIface.WlanConnectionNotification += wlanIface_WlanConnectionNotification;
-              bt_Refresh.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-    */
-
   }
 }
