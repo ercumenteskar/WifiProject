@@ -24,6 +24,11 @@
                         <Button x:Name="bt_Connect" Content="{Binding bt_ConnectContent}" IsEnabled="{Binding canConnect}" Command="{Binding bt_ConnectCommand}" HorizontalAlignment="Left" VerticalAlignment="Top" Width="88" Margin="223,132,0,0" Height="22"/>
                         <CheckBox x:Name="cb_AutoLogin" IsChecked="{Binding Account.AutoLogin}" Content="Otomatik giriş" HorizontalAlignment="Left" Margin="221,91,0,0" VerticalAlignment="Top" Width="90"/>
                         <CheckBox x:Name="cb_AutoConnect" IsChecked="{Binding Account.AutoConnect}" Content="Otomatik bağlan" HorizontalAlignment="Left" Margin="221,111,0,0" VerticalAlignment="Top" Width="90"/>
+                        <ComboBox x:Name="comb_Mode" HorizontalAlignment="Left" Margin="96,122,0,0" VerticalAlignment="Top" Width="120" SelectedIndex="{Binding Account.LastMode}">
+                            <ComboBoxItem Content="Normal"/>
+                            <ComboBoxItem Content="Kredili"/>
+                        </ComboBox>
+                        <Label x:Name="l_Mode" Content="Çalışma Şekli : " HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,122,0,0"/>
                     </Grid>
                 </TabItem>
                 <TabItem x:Name="ti_Register" Header="Kayıt">

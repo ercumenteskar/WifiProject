@@ -11,11 +11,11 @@ namespace WifiSolution
 {
   public class WinFuncs
   {
-    public String ProjectName = "";
+    private String ProjectName = "";
     private String RegistryPath { get { return @"Software\" + ProjectName;  } }
-    public WinFuncs()//String projectName)
+    public WinFuncs(String projectName)
     {
-      //this.ProjectName = projectName;
+      ProjectName = projectName;
     }
 
     public void WriteToRegistry(String name, object value)
@@ -55,7 +55,8 @@ namespace WifiSolution
         p1.StartInfo.CreateNoWindow = true;
         p1.StartInfo.Verb = "runas";
         p1.Start();
-        return p1.StandardOutput.ReadToEnd();
+        String rtn = p1.StandardOutput.ReadToEnd();
+        return rtn;
       }
     }
 

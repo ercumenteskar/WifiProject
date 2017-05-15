@@ -39,14 +39,12 @@ namespace WifiSolution.WifiProvider
     }
     public ProviderViewModel vm;
     TextBoxOutputter outputter;
-    private WifiCommon wc = new WifiCommon();
-    private WinFuncs wf = new WinFuncs();
     public MainWindow()
     {
       InitializeComponent();
       vm = new ProviderViewModel();
       DataContext = vm;
-      vm.AfterCtor(wc, wf);
+      vm.AfterCtor();
       outputter = new TextBoxOutputter(tb_Log);
       Console.SetOut(outputter);
     }

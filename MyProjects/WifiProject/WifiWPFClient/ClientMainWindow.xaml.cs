@@ -40,13 +40,11 @@ namespace WifiSolution.WifiWPFClient
     }
     public ClientViewModel vm;
     TextBoxOutputter outputter;
-    private WifiCommon wc = new WifiCommon();
-    private WinFuncs wf = new WinFuncs();
     public MainWindow()
     {
       InitializeComponent();
       vm = new ClientViewModel();
-      vm.AfterCtor(wc, wf);
+      vm.AfterCtor();
       DataContext = vm;
       outputter = new TextBoxOutputter(tb_Log);
       Console.SetOut(outputter);

@@ -13,24 +13,23 @@ namespace WifiSolution
   {
     private WinFuncs wf;
     private WifiCommon wc;
-    private MyDictionary dict;
-    public WifiAccount(String atype, String projectName, String resource_data, WifiCommon _wc, WinFuncs _wf)
+    public WifiAccount(WifiCommon _wc, WinFuncs _wf)
     {
-      AType = atype;
-      dict = new MyDictionary(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, resource_data.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries));
-      wf = _wf; wf.ProjectName = projectName;
-      wc = _wc; wc.ProjectName = projectName; wc.dict = dict; wc.wf = _wf;
-      if (wf.ReadFromRegistry(AType + "EmailRemember").ToString() != "")
-        Email = saes.DecryptToString(wf.ReadFromRegistry(AType + "EmailRemember").ToString());
-      if (wf.ReadFromRegistry(AType + "PassRemember").ToString() != "")
-        Password = saes.DecryptToString(wf.ReadFromRegistry(AType + "PassRemember").ToString());
+      wf = _wf;
+      wc = _wc;
+      if (wf.ReadFromRegistry("LastMode").ToString() != "")
+        LastMode = int.Parse(wf.ReadFromRegistry("LastMode").ToString());
+      if (wf.ReadFromRegistry(wc.AType + "EmailRemember").ToString() != "")
+        Email = saes.DecryptToString(wf.ReadFromRegistry(wc.AType + "EmailRemember").ToString());
+      if (wf.ReadFromRegistry(wc.AType + "PassRemember").ToString() != "")
+        Password = saes.DecryptToString(wf.ReadFromRegistry(wc.AType + "PassRemember").ToString());
       if (Email != "") EmailRememberIsChecked = true;
       if (Password != "") PassRememberIsChecked = true;
-      AutoLogin = (wf.ReadFromRegistry(AType + "AutoLogin").ToString() == "*");
-      AutoConnect = (wf.ReadFromRegistry(AType + "AutoConnect").ToString() == "*");
+      AutoLogin = (wf.ReadFromRegistry(wc.AType + "AutoLogin").ToString() == "*");
+      AutoConnect = (wf.ReadFromRegistry(wc.AType + "AutoConnect").ToString() == "*");
       if (!mfn.IsAdministrator())
       {
-        wf.ShowMessageBox(dict.GetMessage(10));
+        wf.ShowMessageBox(wc.dict.GetMessage(10));
         wf.Shutdown();
       }
       //FirewallAyarla();
@@ -48,7 +47,6 @@ namespace WifiSolution
     String defaultfwbackupfilename = AppDomain.CurrentDomain.BaseDirectory + "DefaultFirewallPolicies.wfw";
     String ourfwbackupfilename = AppDomain.CurrentDomain.BaseDirectory + "ActiveFirewallPolicies.wfw";
     public String ProviderIp = "";
-    private String AType = "";
     SimpleAES saes = new SimpleAES();
     public event PropertyChangedEventHandler PropertyChanged;
     private void OnPropertyChanged(String property) { PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property)); }
@@ -60,13 +58,15 @@ namespace WifiSolution
       set { _tc_RegisterLoginSelectedIndex = value; OnPropertyChanged(nameof(tc_RegisterLoginSelectedIndex)); }
     }
     private bool? _EmailRememberIsChecked = false;
-    public bool? EmailRememberIsChecked { get { return _EmailRememberIsChecked; } set { _EmailRememberIsChecked = value; RememberAction(value == true, AType + "EmailRemember"); OnPropertyChanged(nameof(EmailRememberIsChecked)); } }
+    public bool? EmailRememberIsChecked { get { return _EmailRememberIsChecked; } set { _EmailRememberIsChecked = value; RememberAction(value == true, wc.AType + "EmailRemember"); OnPropertyChanged(nameof(EmailRememberIsChecked)); } }
     private bool? _PassRememberIsChecked = false;
-    public bool? PassRememberIsChecked { get { return _PassRememberIsChecked; } set { _PassRememberIsChecked = value; RememberAction(value == true, AType + "PassRemember"); OnPropertyChanged(nameof(PassRememberIsChecked)); } }
+    public bool? PassRememberIsChecked { get { return _PassRememberIsChecked; } set { _PassRememberIsChecked = value; RememberAction(value == true, wc.AType + "PassRemember"); OnPropertyChanged(nameof(PassRememberIsChecked)); } }
     private bool? _AutoLogin = false;
-    public bool? AutoLogin { get { return _AutoLogin; } set { _AutoLogin = value; RememberAction(value == true, AType + "AutoLogin"); OnPropertyChanged(nameof(AutoLogin)); } }
+    public bool? AutoLogin { get { return _AutoLogin; } set { _AutoLogin = value; RememberAction(value == true, wc.AType + "AutoLogin"); OnPropertyChanged(nameof(AutoLogin)); } }
     private bool? _AutoConnect = false;
-    public bool? AutoConnect { get { return _AutoConnect; } set { _AutoConnect = value; RememberAction(value == true, AType + "AutoConnect"); OnPropertyChanged(nameof(AutoConnect)); } }
+    public bool? AutoConnect { get { return _AutoConnect; } set { _AutoConnect = value; RememberAction(value == true, wc.AType + "AutoConnect"); OnPropertyChanged(nameof(AutoConnect)); } }
+    private int _LastMode = 0;
+    public int LastMode { get { return _LastMode; } set { _LastMode = value; } }
     private String password = "";
     public String Password { get { return password; } set { password = value; OnPropertyChanged(nameof(Password)); OnPropertyChanged(nameof(canLogin)); } }
     private String _email = "";
@@ -111,18 +111,18 @@ namespace WifiSolution
     {
       string result = null;
       if (!RegisterEmail.isValidEmail())
-        wf.ShowMessageBox(dict.GetMessage(8));
+        wf.ShowMessageBox(wc.dict.GetMessage(8));
       else if (RegisterPassword1 == "")
-        wf.ShowMessageBox(dict.GetMessage(9));
+        wf.ShowMessageBox(wc.dict.GetMessage(9));
       else if (RegisterPassword1 != RegisterPassword2)
-        wf.ShowMessageBox(dict.GetMessage(15));
+        wf.ShowMessageBox(wc.dict.GetMessage(15));
       else
         result = wc.GetWebstring("/Register?Email=" + RegisterEmail + "&Pass=" + RegisterPassword1, ProviderIp);
       //wc.WSRunner("/Register?Email=" + RegisterEmail + "&Pass=" + RegisterPassword1);
       //if (result == null) return;
       //if (!wc.CheckResult(ref result)) return;
       if (!mfn.isValidHexString(result, 32)) return;
-      wf.ShowMessageBox(dict.GetMessage(7));
+      wf.ShowMessageBox(wc.dict.GetMessage(7));
       tc_RegisterLoginSelectedIndex = 0;
       Email = RegisterEmail;
       Password = RegisterPassword1;
@@ -150,7 +150,7 @@ namespace WifiSolution
         //if (!wc.CheckResult(ref result)) return;
         if (!mfn.isValidHexString(_tmp, 32)) return;
       }
-      else wf.ShowMessageBox(dict.GetMessage(8));
+      else wf.ShowMessageBox(wc.dict.GetMessage(8));
     }
     public bool canLogin { get { return Email.isValidEmail() && (Password != ""); } }
     public string bt_LoginContent
@@ -221,9 +221,9 @@ namespace WifiSolution
         SecurityCode = _tmp.Substring(0, 32);
         Logged = true;
         if (EmailRememberIsChecked == true)
-          RememberAction(true, AType + "EmailRemember");
+          RememberAction(true, wc.AType + "EmailRemember");
         if (PassRememberIsChecked == true)
-          RememberAction(true, AType + "PassRemember");
+          RememberAction(true, wc.AType + "PassRemember");
       }
     }
 
