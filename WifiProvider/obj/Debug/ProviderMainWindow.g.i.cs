@@ -177,9 +177,9 @@ namespace WifiSolution.WifiProvider {
         #line hidden
         
         
-        #line 29 "..\..\ProviderMainWindow.xaml"
+        #line 27 "..\..\ProviderMainWindow.xaml"
         [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
-        internal System.Windows.Controls.TabItem ti_Register;
+        internal System.Windows.Controls.ComboBox comb_Mode;
         
         #line default
         #line hidden
@@ -187,13 +187,29 @@ namespace WifiSolution.WifiProvider {
         
         #line 31 "..\..\ProviderMainWindow.xaml"
         [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        internal System.Windows.Controls.Label l_Mode;
+        
+        #line default
+        #line hidden
+        
+        
+        #line 34 "..\..\ProviderMainWindow.xaml"
+        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
+        internal System.Windows.Controls.TabItem ti_Register;
+        
+        #line default
+        #line hidden
+        
+        
+        #line 36 "..\..\ProviderMainWindow.xaml"
+        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
         internal System.Windows.Controls.TextBox tb_RegisterEmail;
         
         #line default
         #line hidden
         
         
-        #line 32 "..\..\ProviderMainWindow.xaml"
+        #line 37 "..\..\ProviderMainWindow.xaml"
         [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
         internal System.Windows.Controls.PasswordBox tb_RegisterPassword1;
         
@@ -201,7 +217,7 @@ namespace WifiSolution.WifiProvider {
         #line hidden
         
         
-        #line 35 "..\..\ProviderMainWindow.xaml"
+        #line 40 "..\..\ProviderMainWindow.xaml"
         [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
         internal System.Windows.Controls.PasswordBox tb_RegisterPassword2;
         
@@ -209,7 +225,7 @@ namespace WifiSolution.WifiProvider {
         #line hidden
         
         
-        #line 37 "..\..\ProviderMainWindow.xaml"
+        #line 42 "..\..\ProviderMainWindow.xaml"
         [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
         internal System.Windows.Controls.Button bt_Register;
         
@@ -316,30 +332,36 @@ namespace WifiSolution.WifiProvider {
             this.cb_AutoConnect = ((System.Windows.Controls.CheckBox)(target));
             return;
             case 18:
-            this.ti_Register = ((System.Windows.Controls.TabItem)(target));
+            this.comb_Mode = ((System.Windows.Controls.ComboBox)(target));
             return;
             case 19:
-            this.tb_RegisterEmail = ((System.Windows.Controls.TextBox)(target));
+            this.l_Mode = ((System.Windows.Controls.Label)(target));
             return;
             case 20:
+            this.ti_Register = ((System.Windows.Controls.TabItem)(target));
+            return;
+            case 21:
+            this.tb_RegisterEmail = ((System.Windows.Controls.TextBox)(target));
+            return;
+            case 22:
             this.tb_RegisterPassword1 = ((System.Windows.Controls.PasswordBox)(target));
             
-            #line 32 "..\..\ProviderMainWindow.xaml"
+            #line 37 "..\..\ProviderMainWindow.xaml"
             this.tb_RegisterPassword1.PasswordChanged += new System.Windows.RoutedEventHandler(this.tb_RegisterPassword1_PasswordChanged);
             
             #line default
             #line hidden
             return;
-            case 21:
+            case 23:
             this.tb_RegisterPassword2 = ((System.Windows.Controls.PasswordBox)(target));
             
-            #line 35 "..\..\ProviderMainWindow.xaml"
+            #line 40 "..\..\ProviderMainWindow.xaml"
             this.tb_RegisterPassword2.PasswordChanged += new System.Windows.RoutedEventHandler(this.tb_RegisterPassword2_PasswordChanged);
             
             #line default
             #line hidden
             return;
-            case 22:
+            case 24:
             this.bt_Register = ((System.Windows.Controls.Button)(target));
             return;
             }

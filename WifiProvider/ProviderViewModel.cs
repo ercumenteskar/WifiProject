@@ -23,13 +23,13 @@ namespace WifiSolution.WifiProvider
     #region Constructor&Destructor
     public ProviderViewModel()
     {
+      wc = new WifiCommon("P", ProjectName, Properties.Resources.Dict);
+      wf = wc.wf;
     }
 
-    public void AfterCtor(WifiCommon _wc, WinFuncs _wf)
+    public void AfterCtor()
     {
-      wc = _wc;
-      wf = _wf;
-      account = new WifiAccount("P", ProjectName, Properties.Resources.Dict, wc, wf);
+      account = new WifiAccount(wc, wf);
       if (canConnect && (account.AutoConnect == true))
         Connect();
     }
@@ -139,7 +139,7 @@ namespace WifiSolution.WifiProvider
         return _bt_ConnectCommand;
       }
     }
-    public bool canConnect { get { return Account.Logged || Connected; } }
+    public bool canConnect { get { return ((Account!=null) && (Account.Logged || Connected)); } }
     private bool _connected = false;
     public bool Connected
     {
@@ -168,7 +168,6 @@ namespace WifiSolution.WifiProvider
     public List<Client> clients = new List<Client>();
     public static IntPtr wdhndl = IntPtr.Zero;
     private int GetSetUsageInterval = 3000;
-    public MyDictionary dict;
     private static String providerIp = "";
     private MyWebServer ws;
     private bool wsStarted = false;
@@ -206,14 +205,14 @@ namespace WifiSolution.WifiProvider
             nicx.Add(nic);
         if (nicx.Count > 1)
         {
-          wf.ShowMessageBox(dict.GetMessage(19));
+          wf.ShowMessageBox(wc.dict.GetMessage(19));
           wf.Shutdown();
         }
         else if (nicx.Count == 1)
           source = nicx[0].Id;
         else
         {
-          wf.ShowMessageBox(dict.GetMessage(20));
+          wf.ShowMessageBox(wc.dict.GetMessage(20));
           wf.Shutdown();
         }
         wf.Netsh("wlan set hostednetwork mode=allow ssid=wifix key=erci1234"); //  key=ercierci
@@ -224,21 +223,32 @@ namespace WifiSolution.WifiProvider
             nicx.Add(nic);
         if (nicx.Count > 1)
         {
-          wf.ShowMessageBox(dict.GetMessage(21));
+          wf.ShowMessageBox(wc.dict.GetMessage(21));
           wf.Shutdown();
         }
         else if (nicx.Count == 1)
           hotspot = nicx[0].Id;
         else
         {
-          wf.ShowMessageBox(dict.GetMessage(22));
+          wf.ShowMessageBox(wc.dict.GetMessage(22));
           wf.Shutdown();
         }
         EnableICS(source, hotspot, true);
         Add2Log("Internet Connection Sharing Enabled");
         wf.Netsh("wlan start hostednetwork");
         Add2Log("HotSpot Opened");
-
+        try
+        {
+          NetworkInterface _nic = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(x => x.Id == hotspot);
+          foreach (UnicastIPAddressInformation ip in _nic.GetIPProperties().UnicastAddresses)
+            if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+              providerIp = ip.Address.ToString();
+        }
+        catch (Exception)
+        {
+          wf.ShowMessageBox(wc.dict.GetMessage(24));
+          wf.Shutdown();
+        }
         if ((thrGetSetUsage != null) && (thrGetSetUsage.IsAlive))
           thrGetSetUsage.Abort();
         thrGetSetUsage = new Thread(new ThreadStart(GetSetUsage));
@@ -273,29 +283,29 @@ namespace WifiSolution.WifiProvider
 
               service.Start();
               service.WaitForStatus(ServiceControllerStatus.Running, timeout);
+              dnsServer.Start();
             }
             catch
             {
               throw;
             }
-            wf.ShowMessageBox(dict.GetMessage(23));
+            wf.ShowMessageBox(wc.dict.GetMessage(23));
           }
           else throw;
         }
         Add2Log("DNS Server running");
         #endregion
-        //device4Arp = (SharpPcap.LibPcap.LibPcapLiveDevice)CaptureDeviceList.Instance.FirstOrDefault(x => x.Name.Contains(hotspot));
         #region Capture Device // start olmadan önce capture başlarsa capture çalışmıyor...
         //CaptureDeviceList.Instance.Refresh();
         device = CaptureDeviceList.Instance.FirstOrDefault(x => x.Name.Contains(hotspot));// devices[devices.Count - 1];
-        var v = ((SharpPcap.WinPcap.WinPcapDevice)device).Addresses.First(x => x.Addr.ipAddress.ToString().Contains("."));
-        if (v != null)
-          providerIp = v.Addr.ipAddress.ToString(); // Anlamadığım bir sebepten dolayı bazen 0.0.0.0 geliyor. Ya da 192.168.0.1 // Ostoto kurup kaldırınca böyle oldu...
-        else
-        {
-          wf.ShowMessageBox(dict.GetMessage(24));
-          wf.Shutdown();
-        }
+        //var v = ((SharpPcap.WinPcap.WinPcapDevice)device).Addresses.First(x => x.Addr.ipAddress.ToString().Contains("."));
+        //if (v != null)
+        //  providerIp = v.Addr.ipAddress.ToString(); // Anlamadığım bir sebepten dolayı bazen 0.0.0.0 geliyor. Ya da 192.168.0.1 // Ostoto kurup kaldırınca böyle oldu...
+        //else
+        //{
+        //  wf.ShowMessageBox(wc.dict.GetMessage(24));
+        //  wf.Shutdown();
+        //}
         //if (!providerIp.Contains(".")) 
         //  providerIp = GetValue(device.ToString().Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries)[8], "Addr:      ");
         //if (!providerIp.Contains("."))
@@ -475,7 +485,7 @@ namespace WifiSolution.WifiProvider
           if (cl.Usage >= cl.Quota)
           {
             cl.Online = false; // RemoveClient(_client); listeden kaldırmasın, sadece kullanıcı programını kapattı. listeden silince provider ekranında tekrar added görünüyor...
-            Add2Log(dict.GetMessage(11, cl.Mac + "¶" + dict.GetMessage(14)));
+            Add2Log(wc.dict.GetMessage(11, cl.Mac + "¶" + wc.dict.GetMessage(14)));
             return;
           }
           //Add2Log(cl.Mac + " : " + (cl.Usage / 1024).ToString("###,###,##0"));
@@ -562,7 +572,7 @@ namespace WifiSolution.WifiProvider
       }
       else if (command == "ConnectUS")
       {
-        if (_client.Quota == 0) return "¶E:" + dict.GetMessage(18);
+        if (_client.Quota == 0) return "¶E:" + wc.dict.GetMessage(18);
         String ClientEvidence = url.GetUrlParam("ClientEvidence");
         _temp = Account.myEvidence();
         _temp = wc.GetWebstring("/" + command + "?" + url.Substring(url.IndexOf("&") + 1));
@@ -777,7 +787,7 @@ namespace WifiSolution.WifiProvider
           if ((item.Online) && ((DateTime.Now - item.LastQuery).TotalMilliseconds > GetSetUsageInterval * 2))
           {
             item.Online = false;
-            Add2Log(dict.GetMessage(11, item.Mac + "¶" + dict.GetMessage(13))); // + (GetSetUsageInterval / 1000 * 2).ToString() + " saniyedir yanıt vermediği için bağlantısı kapatıldı.");
+            Add2Log(wc.dict.GetMessage(11, item.Mac + "¶" + wc.dict.GetMessage(13))); // + (GetSetUsageInterval / 1000 * 2).ToString() + " saniyedir yanıt vermediği için bağlantısı kapatıldı.");
           }
         }
         Thread.Sleep(GetSetUsageInterval);

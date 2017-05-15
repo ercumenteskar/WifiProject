@@ -7,6 +7,7 @@ using My;
 using System.Net;
 using System.ComponentModel;
 using System.Threading;
+using System.Globalization;
 
 namespace WifiSolution
 {
@@ -15,14 +16,15 @@ namespace WifiSolution
     public MyDictionary dict;
     public WinFuncs wf;
     public string ProjectName;
+    public string AType = "";
     private readonly string WifiServicePrefix = "http://70.35.206.36:1004/Request.aspx?Command=";
 
-    public WifiCommon()// MyDictionary dictionary, String projectName)
+    public WifiCommon(String atype, String projectName, String resource_data)// MyDictionary dictionary, String projectName)
     {
-      
-      //ProjectName = projectName;
-      //dict = dictionary;
-      //wf = new WinFuncs(ProjectName);
+      AType = atype;
+      ProjectName = projectName;
+      dict = new MyDictionary(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, resource_data.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries));
+      wf = new WinFuncs(projectName);
     }
 
     public String GetWebstring(String Url, String ProviderIp = "")

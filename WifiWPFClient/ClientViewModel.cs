@@ -20,17 +20,17 @@ namespace WifiSolution.WifiWPFClient
   {
     private const string ProjectName = "Wifi";
     string wifiprefix = "wifix";
-    private WinFuncs wf;// = new WinFuncs(ProjectName);
+    private WinFuncs wf;
     private WifiCommon wc;
     public ClientViewModel()
     {
+      wc = new WifiCommon("C", ProjectName, Properties.Resources.Dict);
+      wf = wc.wf;
     }
 
-    public void AfterCtor(WifiCommon _wc, WinFuncs _wf)
+    public void AfterCtor()
     {
-      wc = _wc;
-      wf = _wf;
-      account = new WifiAccount("C", ProjectName, Properties.Resources.Dict, wc, wf);
+      account = new WifiAccount(wc, wf);
       if (canConnect && (account.AutoConnect == true))
         Connect();
     }
