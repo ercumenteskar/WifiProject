@@ -1,0 +1,16 @@
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\bin\Release\WifiWPFClient.exe.config
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\bin\Release\WifiWPFClient.exe
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\bin\Release\WifiWPFClient.pdb
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\bin\Release\ManagedWifi.dll
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\obj\Release\WifiWPFClient.csprojResolveAssemblyReference.cache
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\obj\Release\App.g.cs
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\obj\Release\WifiWPFClient_MarkupCompile.cache
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\obj\Release\WifiWPFClient.g.resources
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\obj\Release\WifiWPFClient.Properties.Resources.resources
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\obj\Release\WifiWPFClient.csproj.GenerateResource.Cache
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\obj\Release\WifiWPFClient.exe
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\obj\Release\WifiWPFClient.pdb
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\bin\Release\SharpPcap.dll
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\bin\Release\PacketDotNet.dll
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\obj\Release\ClientMainWindow.baml
+C:\VSProjects\MyProjects\WifiProject\WifiWPFClient\obj\Release\ClientMainWindow.g.cs
